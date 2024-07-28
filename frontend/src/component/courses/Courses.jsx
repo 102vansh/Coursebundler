@@ -13,17 +13,25 @@ const Courses = () => {
   
   const{loading,courses,error} = useSelector(state=>state.course)
   const dispatch = useDispatch()
-     const [keyword,setkeyword]=React.useState("")
+     const [keywoard,setkeyword]=React.useState("")
     const [category,setcategory]=React.useState("")
-    useEffect(()=>{
-dispatch(getallcourses(keyword,category))
-    },[category,keyword,dispatch])
-    const categories =['web development','data science','machine learning','blockchain','artificial intelligence','dsa']
+    console.log(keywoard,category)
+
+    
+    const categories =['Web Development','Data Science','Machine Learning','Blockchain','Artificial Intelligence','Dsa']
     const addtoplaylist=async(courseid)=>{
          await dispatch(addtoPlaylist(courseid))
         console.log(courseid)
         dispatch(getmyprofile())
     }
+
+
+    useEffect(()=>{
+      console.log(keywoard,category)
+      dispatch(getallcourses(category,keywoard))
+
+          },[category,keywoard,dispatch]) 
+      
     const Course = ({views,title,description,imagesrc,creator,id,lecturecount}) => {
         
         return (
@@ -32,7 +40,7 @@ dispatch(getallcourses(keyword,category))
 <Heading ml={"5"} mt={"5"} textAlign={["center","left"]}  maxW={'200px'} fontFamily={'sans-serif'} children={title} size={"sm"} />
 
 <Text ml={"5"} noOfLines={3} textAlign={["center","left"]} children={description} />
-<HStack ml={'7'} mt={'2'}>
+<HStack ml={'7'} mt={'2'} spacing={"4"}>
     <Text fontWeight={"bold"} children={`Creator : ${creator}`} textTransform={"uppercase"}></Text>
     <Text fontWeight={"bold"} children={`Lectures : ${lecturecount}`} textTransform={"uppercase"}></Text>
 </HStack>
@@ -51,11 +59,14 @@ dispatch(getallcourses(keyword,category))
   return (
 <Container minH={"100vh"} maxW={"container.lg"} p={"8"}>
 <Heading children="All courses" m={"8"}  />
-<Input value={keyword} placeholder="Search for courses" m={"2"} onChange={(e)=>setkeyword(e.target.value)} focusBorderColor='yellow.500' type='text'/>
+<Input value={keywoard} placeholder="Search for courses" m={"2"} onChange={(e)=>setkeyword(e.target.value)} focusBorderColor='yellow.500' type='text'/>
 <HStack overflowX={"auto"} paddingY={"8"} css={{'&::-webkit-scrollbar':{display:"none"}}} >
-{categories.map((item,index)=>(
+{categories.map((item,index)=>{
+  return (
+  
     <Button key={index} onClick={()=>setcategory(item)} minW={"60"} colorScheme="yellow" children={item}></Button>
-))}
+  )
+})}
 
 </HStack>
 
@@ -63,7 +74,7 @@ dispatch(getallcourses(keyword,category))
 */}{
   courses.length>0 ?(
     courses?.map((item,index)=>(
-    <Course key={item._id} title={item.title} views={item.views} description={item.description} imagesrc={item.poster.url} creator={item.createdBy} lecturecount={item.numofVideos} id={item._id} addtoplaylist={addtoplaylist} />
+    <Course key={item._id} title={item.title} views={item.views} description={item.description} imagesrc={item.poster.url} creator={item.createdBy} lecturecount={item.numOfVideos} id={item._id} addtoplaylist={addtoplaylist} />
   ))
   ):(
     <Heading>No courses found</Heading>)

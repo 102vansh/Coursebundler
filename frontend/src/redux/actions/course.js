@@ -7,7 +7,7 @@ export const getallcourses = (category='',keywoard='') => async (dispatch) => {
         dispatch({ type: 'allcourseRequest' });
         const { data } = await axios.get(`http://localhost:3001/api/v1/course/allcourse?keywoard=${keywoard}&category=${category}`);
         dispatch({ type: 'allcourseSuccess', payload: data.courses });
-        console.log(data);
+        console.log(data.courses);
     
     } catch (error) {
         console.log(error);

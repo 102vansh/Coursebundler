@@ -74,6 +74,14 @@ export const adminReducer = createReducer({}, (builder) => {
         }).addCase('getadminstatsFailure',(state,action)=>{
             state.loading = false;
             state.error = action.payload
+        }).addCase('deletelectureRequest',(state,action)=>{
+            state.loading = true
+        }).addCase('deletelectureSuccess',(state,action)=>{
+            state.loading = false;
+            state.message = action.payload
+        }).addCase('deletelectureFailure',(state,action)=>{
+            state.loading = false;
+            state.error = action.payload
         })
 
     

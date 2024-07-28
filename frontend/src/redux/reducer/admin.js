@@ -45,7 +45,7 @@ export const deletecourse = (id)=>async(dispatch)=>{
                 },
                 withCredentials:true
             })
-            dispatch({type:"addlectureSuccess",payload:data.message})
+            dispatch({type:"addlectureSuccess",payload:data.course})
             toast.success(data.message)
             console.log(data)
         }catch(error){
@@ -116,3 +116,19 @@ dispatch({type:"getadminstatsSuccess",payload:data})
 }
 
             }
+
+            export const deletelectures = (courseid,lectureid)=>async(dispatch)=>{
+                try{
+                    dispatch({type:"deletelectureRequest"})
+                    const {data} = await axios.delete(`http://localhost:3001/api/v1/course/deletelecture?courseid=${courseid}&lectureid=${lectureid}`,{
+                        withCredentials:true
+                    })
+                    dispatch({type:"deletelectureSuccess",payload:data.message})
+                    toast.success(data.message)
+                }catch(error){
+                    console.log(error)
+                    toast.error(error.response.data.message)
+                    dispatch({type:"deletelectureFailure",payload:error.response.data.message})
+                }
+                
+                }

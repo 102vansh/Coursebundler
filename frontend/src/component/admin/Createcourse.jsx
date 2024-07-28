@@ -185,8 +185,9 @@ import { createcourse } from '../../redux/reducer/admin';
 import { fileuploadcss } from '../Auth/Register';
 
 const Createcourse = () => {
+  const [loading, setLoading] = useState(false);
   const dispatch = useDispatch();
-  const { loading, message } = useSelector((store) => store.admin);
+  const {  message } = useSelector((store) => store.admin);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState("");
@@ -217,6 +218,7 @@ const Createcourse = () => {
   };
 
   const submitHandler = (e) => {
+
     e.preventDefault();
     const myForm = new FormData();
     myForm.append('title', title);
@@ -226,7 +228,16 @@ const Createcourse = () => {
     myForm.append('poster', poster);
 
     dispatch(createcourse(myForm));
+    setTitle("");
+    setDescription("");
+    setCategory("");
+    setCreatedBy("");
+    setPoster(null);
+    setImagePrev(null);
   };
+  if(loading){
+    setLoading(true)
+  }
 
   return (
     <Grid minH={"100vh"} templateColumns={["1fr", "5fr 1fr"]}>
@@ -249,7 +260,8 @@ const Createcourse = () => {
               }
             }} />
             {imagePrev && <Image src={imagePrev} objectFit='contain' boxSize='26' />}
-            <Button w={'full'} type='submit' colorScheme={'yellow'}>Create</Button>
+            <Button w={'full'} type='submit' colorScheme={'yellow'}>{loading ? ('Creating...'):('Create')}
+                          </Button>
           </VStack>
         </form>
       </Container>

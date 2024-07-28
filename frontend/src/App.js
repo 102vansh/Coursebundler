@@ -43,7 +43,7 @@ const App = () => {
       <Header user={user} isAuthenticated={isAuthenticated}/>
       <Routes>
         <Route path="/" element={<Home />}/>
-        <Route path='/courses' element=<Courses/>/>
+        <Route path='/courses' element= {<Courses/>}/>
         <Route path='/course/:id' element={<ProtectedRoute isAuthenticated = {isAuthenticated}><Coursepage user={user}/></ProtectedRoute>}/>
         <Route path='/profile' element={<ProtectedRoute isAuthenticated = {isAuthenticated}><Profile user={user}/></ProtectedRoute>}/>
         <Route path='/updateprofile' element={<ProtectedRoute isAuthenticated = {isAuthenticated}><UpdateProfile/></ProtectedRoute>}/>

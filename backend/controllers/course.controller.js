@@ -67,15 +67,70 @@ await course.save()
     }
 }
 exports.createlecture = async(req, res,next) => {
+
+    // try {
+    //     const { title, description } = req.body;
+    //     const video = req.files ? req.files.video : null;
+    
+    //     if (!video) {
+    //       return res.status(400).json({
+    //         success: false,
+    //         message: "Video file is required"
+    //       });
+    //     }
+    
+    //     const course = await Course.findById(req.params.id);
+    //     if (!course) {
+    //       return next(new ErrorHandler("Course not found", 404));
+    //     }
+    
+    //     const mycloud = await cloudinary.v2.uploader.upload(video.tempFilePath, {
+    //       resource_type: "video"
+    //     });
+    
+    //     if (!mycloud) {
+    //       return next(new ErrorHandler("Video upload failed", 400));
+    //     }
+    
+    //     course.lectures.push({
+    //       title,
+    //       description,
+    //       video: {
+    //         public_id: mycloud.public_id,
+    //         url: mycloud.secure_url
+    //       }
+    //     });
+    
+    //     course.numOfVideos = course.lectures.length;
+    //     await course.save();
+    
+    //     res.status(200).json({
+    //       success: true,
+    //       message: "Lecture created successfully",
+    //       course
+    //     });
+    //   } catch (error) {
+    //     return next(error);
+    //   }
+    // ;
+    
+
+
+
 try{
     const{title,description}=req.body
-    const{video} = req.files
+    const video = req.files.video
+    if(!video){
+        return next(new ErrorHandler("Please upload an image", 400))
+    }
 const course = await Course.findById(req.params.id)
 if(!course){
     return next(new ErrorHandler("Course not found", 404))
 }
 
-const mycloud = await cloudinary.v2.uploader.upload(video.tempFilePath)
+const mycloud = await cloudinary.v2.uploader.upload(video.tempFilePath,{
+    resource_type:"video"
+})
 
 if(!mycloud){
     return next(new ErrorHandler("Please upload an image", 400))

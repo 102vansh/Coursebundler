@@ -19,11 +19,13 @@ const Users = () => {
     const updatehandler = (id) => {
         console.log(id)
         dispatch(updaterole(id))
+        dispatch(getallusers())
     }
 
     const deleteuser = (id) => {
         console.log(id)
         dispatch(deleteusers(id))
+        dispatch(getallusers())
     }
 
     return (
