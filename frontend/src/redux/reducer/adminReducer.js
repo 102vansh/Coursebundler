@@ -1,15 +1,15 @@
 import { createReducer } from "@reduxjs/toolkit";
 
-export const adminReducer = createReducer({}, (builder) => {
+export const adminReducer = createReducer({loading: false, message: null, error: null,   }, (builder) => {
     builder
-        .addCase("CreatecoureRequest", (state, action) => {
+        .addCase("CreatecourseRequest", (state, action) => {
             state.loading = true;
         })
-        .addCase("CreatecoureSuccess", (state, action) => {
+        .addCase("CreatecourseSuccess", (state, action) => {
             state.loading = false;
             state.message = action.payload;
         })
-        .addCase("CreatecoureFailure", (state, action) => {
+        .addCase("CreatecourseFailure", (state, action) => {
             state.loading = false;
             state.error = action.payload;
         }).addCase("deletecourseRequest", (state, action) => {

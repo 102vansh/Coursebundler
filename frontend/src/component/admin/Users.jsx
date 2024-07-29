@@ -50,7 +50,7 @@ const Users = () => {
                         
                             {users?.map((item) => (
 
-                                <Row key={item._id} item={item} updatehandler={(()=>updatehandler(item._id))} deleteuser={(()=>deleteuser(item._id))} />
+                                <Row key={item._id} item={item} updatehandler={(()=>updatehandler(item._id))} deleteuser={(()=>deleteuser(item._id))} loading={loading} />
                             ))
                 
                             }
@@ -65,7 +65,7 @@ const Users = () => {
 
 export default Users
 
-function Row({ item, updatehandler, deleteuser }) {
+function Row({ item, updatehandler, deleteuser, loading }) {
     return (
         <Tr>
             <Td>{item._id}</Td>
@@ -75,7 +75,7 @@ function Row({ item, updatehandler, deleteuser }) {
             <Td>{item.subscription?.status === 'active' ? 'active' : 'notactive'}</Td>
             <Td isNumeric>
                 <HStack justifyContent={"flex-end"}>
-                    <Button onClick={() => updatehandler(item.id)} variant={'outline'} color={'purple.500'}>Change Role</Button>
+                    <Button onClick={() => updatehandler(item.id)} variant={'outline'} color={'purple.500'}>{loading ? 'updating...' : 'Change Role'}</Button>
                     <Button onClick={() => deleteuser(item.id)} variant={'outline'} color={'purple.500'}><RiDeleteBin7Fill /></Button>
                 </HStack>
             </Td>

@@ -85,8 +85,10 @@ const Request = () => {
     const [email, setEmail] = useState('');
     const [course, setCourse] = useState('');
     const form = useRef();
+    const[loading,setLoading]=useState(false)
 
     const handlesubmit = (e) => {
+        setLoading(true)
         e.preventDefault();
         console.log("Form Submitted");
 
@@ -105,10 +107,12 @@ const Request = () => {
                     setName('');
                     setEmail('');
                     setCourse('');
+                    setLoading(false)
                 },
                 (error) => {
                     console.error('EmailJS Error:', error);
                     toast.error('Message not sent');
+                    setLoading(false)
                 }
             );
     };
@@ -154,7 +158,7 @@ const Request = () => {
                             type='text'
                         />
                     </Box>
-                    <Button my={4} colorScheme='yellow' type='submit'>Send Message</Button>
+                    <Button my={4} colorScheme='yellow' type='submit'>{loading ? 'Sending...' : 'Send Message'}</Button>
                     <Box my={4}>
                         See Available Courses?{' '}
                         <Link to={'/courses'}>

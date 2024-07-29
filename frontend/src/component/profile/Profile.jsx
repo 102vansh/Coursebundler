@@ -227,7 +227,7 @@ import {
   ModalOverlay,
   ModalFooter,
 } from '@chakra-ui/react';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { profilepicture, removefromPlaylist } from '../../redux/actions/profile';
 import { asyncThunkCreator } from '@reduxjs/toolkit';
 import { cancelsubscription, getmyprofile } from '../../redux/actions/user';
@@ -255,7 +255,7 @@ const dispatch = useDispatch()
   const { isOpen, onOpen, onClose } = useDisclosure();
   const [avatar, setImage] = useState('');
   const [imgPrev, setImgPrev] = useState('');
-
+const{loading} = useSelector(state=>state.user)
   const changeImage = (e) => {
     const file = e.target.files[0];
     const reader = new FileReader();
@@ -312,10 +312,10 @@ const cancelsubs=async(id)=>{
               <HStack spacing={4}>
                 <Text fontWeight="bold">Subscription:</Text>
                 {user?.subscription?.status === 'active' ? (
-                  <Button onClick={cancelsubs} colorScheme="red">Cancel Subscription</Button>
+                  <Button onClick={cancelsubs} colorScheme="red">{loading?"loading...":"Cancel"}</Button>
                 ) : (
                   <Link to="/subscribe">
-                    <Button colorScheme="yellow">Subscribe</Button>
+                    <Button colorScheme="yellow">{loading?"loading...":"Subscribe"}</Button>
                   </Link>
                 )}
               </HStack>

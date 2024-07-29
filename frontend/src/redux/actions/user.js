@@ -106,11 +106,11 @@ export const addtoPlaylist = (id) => async(dispatch) => {
             },
             withCredentials:true
         })
-        dispatch({type:"addtoplaylistSuccess",payload:data.message})
+        dispatch({type:"addtoPlaylistSuccess",payload:data.message})
         console.log(data)
         toast.success(data.message)
     }catch(error){
-        dispatch({type:"addtoPlaylistFail",payload:error.response.data.message})
+        dispatch({type:"addtoPlaylistFailure",payload:error.response.data.message})
         toast.error(error.response.data.message)
         console.log(error)
     }

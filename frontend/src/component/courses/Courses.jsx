@@ -20,9 +20,11 @@ const Courses = () => {
     
     const categories =['Web Development','Data Science','Machine Learning','Blockchain','Artificial Intelligence','Dsa']
     const addtoplaylist=async(courseid)=>{
+    
          await dispatch(addtoPlaylist(courseid))
         console.log(courseid)
         dispatch(getmyprofile())
+      
     }
 
 
@@ -49,8 +51,8 @@ const Courses = () => {
 
 </Stack>
 <Stack direction={['column','row']} flexWrap={"wrap"} justifyContent={['flex-start',"space-evenly"]} alignItems={["center","flex-start"]} >
-<Link ml={"8"} to={`/course/${id}`}><Button colorScheme="yellow" >Watch now</Button></Link>
-<Button ml={"3"} variant={'ghost'} colorScheme="yellow" onClick={()=>addtoplaylist(id)}>Add to playlist</Button>
+<Link ml={"8"} to={`/course/${id}`}><Button colorScheme="yellow" >{loading? 'loading...': 'Watch now'}</Button></Link>
+<Button ml={"3"} variant={'ghost'} colorScheme="yellow" onClick={()=>addtoplaylist(id)}>{loading? 'loading...': 'Add to playlist'}</Button>
 </Stack>
 
             </VStack>

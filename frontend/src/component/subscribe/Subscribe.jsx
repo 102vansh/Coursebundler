@@ -47,6 +47,7 @@ const Subscribe = ({user}) => {
 const {data} =  await axios.get(`http://localhost:3001/api/v1/payment/getkey`)
 setKey(data.key)
 dispatch(buysubscription())
+
   }
   useEffect(() => {
     if(subscriptionId){

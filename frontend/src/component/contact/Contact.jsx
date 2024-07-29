@@ -1,5 +1,5 @@
 import { Button, Container, Heading, VStack } from '@chakra-ui/react'
-import React from 'react'
+import React, { useState } from 'react'
 import { Box, FormLabel, Input } from '@chakra-ui/react'
 import { Link } from 'react-router-dom'
 import emailjs from '@emailjs/browser'
@@ -11,8 +11,10 @@ const Contact = () => {
     const [email, setEmail] = React.useState('')
     const [message, setMessage] = React.useState('')
     const form = useRef();
+    const[loading,setloading] = useState(false)
 
     const handlesubmit = (e) => {
+      setloading(true)
       e.preventDefault();
       console.log("Form Submitted");
   
@@ -28,10 +30,12 @@ const Contact = () => {
             console.log(result.text);
             toast.success('Message sent successfully');
             form.current.reset();
+            setloading(false)
           },
           (error) => {
             console.log(error.text);
           toast.error('Message not sent');
+          setloading(false)
           }
         );
     };
@@ -57,7 +61,7 @@ const Contact = () => {
             <Input required id='message' placeholder='Enter Message' value={message} onChange={(e)=>setMessage(e.target.value)} focusBorderColor='yellow.500' type='text'></Input>
         </FormLabel>
         </Box>
-        <Button my={4} colorScheme='yellow' type='submit'>Send Message</Button>
+        <Button my={4} colorScheme='yellow' type='submit'>{loading ? 'Sending...' : 'Send Message'}</Button>
         <Box my={4}>
         Request for a course ?{' '}
         <Link to={'/request'}>

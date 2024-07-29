@@ -243,7 +243,7 @@ const CourseModal = ({ isOpen, onClose, deletebutton, id, courseTitle, lectures,
   const [description, setDescription] = React.useState('')
   const [video, setVideo] = React.useState('')
   const [videoPrev, setVideoPrev] = React.useState('')
-const {loading} = useSelector((state)=>state.course)
+const {loading} = useSelector((state)=>state.admin)
   const changeVideoHandler = (e) => {
     const file = e.target.files[0]
     const reader = new FileReader()
@@ -314,7 +314,7 @@ const {loading} = useSelector((state)=>state.course)
                     required 
                   />
                   {videoPrev && <video src={videoPrev} controls style={{ width: '100%', marginTop: '16px' }} />}
-                  <Button isLoading={loading} w="full" colorScheme="purple" type="submit">Upload</Button>
+                  <Button  w="full" colorScheme="purple" type="submit">{loading ? 'Uploading...' : 'Upload' }</Button>
                 </VStack>
               </form>
             </Box>

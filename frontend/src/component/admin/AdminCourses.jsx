@@ -235,10 +235,10 @@ import { addlectures, deletecourse, deletelectures } from '../../redux/reducer/a
 const AdminCourses = () => {
     const { isOpen, onOpen, onClose } = useDisclosure()
     const dispatch = useDispatch()
-    const { courses, lectures,loading } = useSelector(state => state.course)
+    const { courses, lectures } = useSelector(state => state.course)
     const [courseid, setCourseid] = useState("")
     const [coursetitle, setCoursetitle] = useState('')
-
+const {loading} = useSelector(state=>state.admin)
     const coursedetail = (courseid, title) => {
         dispatch(getlectures(courseid))
         onOpen()
@@ -297,7 +297,7 @@ const AdminCourses = () => {
                         </Thead>
                         <Tbody>
                             {courses.map((item) => (
-                                <Row key={item._id} item={item} coursedetail={coursedetail} deleteuser={deleteuser} />
+                                <Row key={item._id} item={item} coursedetail={coursedetail} deleteuser={deleteuser} loading={loading} />
                             ))}
                         </Tbody>
                     </Table>
@@ -309,7 +309,7 @@ const AdminCourses = () => {
     )
 }
 
-function Row({ item, coursedetail, deleteuser }) {
+function Row({ item, coursedetail, deleteuser, loading }) {
     return (
         <Tr>
             <Td>{item._id}</Td>
@@ -322,7 +322,8 @@ function Row({ item, coursedetail, deleteuser }) {
             <Td isNumeric>
                 <HStack justifyContent={"flex-end"}>
                     <Button onClick={() => coursedetail(item._id, item.title)} variant={'outline'} color={'purple.500'}>Details</Button>
-                    <Button onClick={() => deleteuser(item._id)} variant={'outline'} color={'purple.500'}><RiDeleteBin7Fill /></Button>
+                    <Button onClick={() => deleteuser(item._id)} variant={'outline'} color={'purple.500'}>
+                        {loading?'Deleting...':<RiDeleteBin7Fill />}</Button>
                 </HStack>
             </Td>
         </Tr>
