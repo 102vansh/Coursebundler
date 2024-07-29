@@ -265,7 +265,8 @@ const {loading} = useSelector(state=>state.admin)
         myform.append("description", description)
         myform.append("video", video)
         dispatch(addlectures(myform, courseid))
-        dispatch(getlectures(courseid))
+        dispatch(getlectures())
+        
     }
 
     useEffect(() => {
