@@ -4,7 +4,7 @@ import axios from "axios"
 export const createcourse = (formdata)=>async(dispatch)=>{
 try{
 dispatch({type:"CreatecourseRequest"})
-const {data} = await axios.post("http://localhost:3001/api/v1/course/createcourse",formdata,{
+const {data} = await axios.post("https://coursebundler-1-788d.onrender.com/api/v1/course/createcourse",formdata,{
     headers:{
         "Content-Type":"multipart/form-data"
     },
@@ -24,7 +24,7 @@ toast.success(data.message)
 export const deletecourse = (id)=>async(dispatch)=>{
     try{
         dispatch({type:"deletecourseRequest"})
-        const {data} = await axios.delete(`http://localhost:3001/api/v1/course/deletecourse/${id}`,{
+        const {data} = await axios.delete(`https://coursebundler-1-788d.onrender.com/api/v1/course/deletecourse/${id}`,{
             withCredentials:true})
         dispatch({type:"deletecourseSuccess",payload:data.message})
         toast.success(data.message)
@@ -39,7 +39,7 @@ export const deletecourse = (id)=>async(dispatch)=>{
     export const addlectures = (formdata,id)=>async(dispatch)=>{
         try{
             dispatch({type:"addlectureRequest"})
-            const {data} = await axios.post(`http://localhost:3001/api/v1/course/createlecture/${id}`,formdata,{
+            const {data} = await axios.post(`https://coursebundler-1-788d.onrender.com/api/v1/course/createlecture/${id}`,formdata,{
                 headers:{
                     "Content-Type":"multipart/form-data"
                 },
@@ -59,7 +59,7 @@ export const deletecourse = (id)=>async(dispatch)=>{
       export const getallusers = ()  => async (dispatch) => {
         try {
           dispatch({ type: "getalluserRequest" });
-          const { data } = await axios.get("http://localhost:3001/api/v1/user/admin/getalluser", {
+          const { data } = await axios.get("https://coursebundler-1-788d.onrender.com/api/v1/user/admin/getalluser", {
             withCredentials: true,
           });
           dispatch({ type: "getalluserSuccess", payload: data.users });
@@ -74,7 +74,7 @@ export const deletecourse = (id)=>async(dispatch)=>{
     export const updaterole = (id)=>async(dispatch)=>{
         try{
             dispatch({type:"updateroleRequest"})
-            const {data} = await axios.put(`http://localhost:3001/api/v1/user/admin/updaterole/${id}`,{},{
+            const {data} = await axios.put(`https://coursebundler-1-788d.onrender.com/api/v1/user/admin/updaterole/${id}`,{},{
                 withCredentials:true
             })
             dispatch({type:"updateroleSuccess",payload:data.message})
@@ -90,7 +90,7 @@ export const deletecourse = (id)=>async(dispatch)=>{
         export const deleteusers = (id)=>async(dispatch)=>{
             try{
                 dispatch({type:"deleteuserRequest"})
-                const {data} = await axios.delete(`http://localhost:3001/api/v1/user/admin/deleteuser/${id}`,{
+                const {data} = await axios.delete(`https://coursebundler-1-788d.onrender.com/api/v1/user/admin/deleteuser/${id}`,{
                     withCredentials:true
                 })
                 dispatch({type:"deleteuserSuccess",payload:data.message})
@@ -106,7 +106,7 @@ export const deletecourse = (id)=>async(dispatch)=>{
             export const dashboard = ()=>async(dispatch)=>{
 try{
     dispatch({type:"getadminstatsRequest"})
-const {data} = await axios.get("http://localhost:3001/api/v1/other/admin/stats",{
+const {data} = await axios.get("https://coursebundler-1-788d.onrender.com/api/v1/other/admin/stats",{
     withCredentials:true
 })
 dispatch({type:"getadminstatsSuccess",payload:data})
@@ -120,7 +120,7 @@ dispatch({type:"getadminstatsSuccess",payload:data})
             export const deletelectures = (courseid,lectureid)=>async(dispatch)=>{
                 try{
                     dispatch({type:"deletelectureRequest"})
-                    const {data} = await axios.delete(`http://localhost:3001/api/v1/course/deletelecture?courseid=${courseid}&lectureid=${lectureid}`,{
+                    const {data} = await axios.delete(`https://coursebundler-1-788d.onrender.com/api/v1/course/deletelecture?courseid=${courseid}&lectureid=${lectureid}`,{
                         withCredentials:true
                     })
                     dispatch({type:"deletelectureSuccess",payload:data.message})
