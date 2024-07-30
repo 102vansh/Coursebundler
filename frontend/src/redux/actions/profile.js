@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom';
 export const updateprofile =(name,email) =>async(dispatch)=>{
 try{
 dispatch({type:'updateprofileRequest'})
-const {data} = await axios.put(`http://localhost:3001/api/v1/user/updateprofile`,{name,email},{
+const {data} = await axios.put(`https://coursebundler-1-788d.onrender.com/api/v1/user/updateprofile`,{name,email},{
 headers:{
     "Content-Type": "application/json"
 },
@@ -25,7 +25,7 @@ toast.error(error.response.data.message)
 export const changepassword = (oldPassword,newPassword) =>async(dispatch)=>{
     try{
         dispatch({type:'changePasswordRequest'})
-        const {data} = await axios.put(`http://localhost:3001/api/v1/user/changepassword`,{oldPassword,newPassword},{
+        const {data} = await axios.put(`https://coursebundler-1-788d.onrender.com/api/v1/user/changepassword`,{oldPassword,newPassword},{
             headers:{
                 "Content-Type": "application/json"
             },
@@ -46,7 +46,7 @@ export const changepassword = (oldPassword,newPassword) =>async(dispatch)=>{
 export const profilepicture = (formdata) =>async(dispatch)=>{
     try{
         dispatch({type:'updatepictureRequest'})
-        const {data} = await axios.put(`http://localhost:3001/api/v1/user/profilepicture`,formdata,{
+        const {data} = await axios.put(`https://coursebundler-1-788d.onrender.com/api/v1/user/profilepicture`,formdata,{
             headers:{
                 "Content-Type": "multipart/form-data"
             },
@@ -65,7 +65,7 @@ export const profilepicture = (formdata) =>async(dispatch)=>{
 export const forgetpassword = (email) =>async(dispatch)=>{
     try{
         dispatch({type:'forgetpasswordRequest'})
-        const {data} = await axios.post(`http://localhost:3001/api/v1/user/forgotpassword`,{email},{
+        const {data} = await axios.post(`https://coursebundler-1-788d.onrender.com/api/v1/user/forgotpassword`,{email},{
             headers:{
                 "Content-Type": "application/json"
             },
@@ -85,7 +85,7 @@ export const resetpassword = (token,password) =>async(dispatch)=>{
     const navigate = useNavigate()
     try{
         dispatch({type:'resetpasswordRequest'})
-        const {data} = await axios.put(`http://localhost:3001/api/v1/user/resetpassword/${token}`,{password},{
+        const {data} = await axios.put(`https://coursebundler-1-788d.onrender.com/api/v1/user/resetpassword/${token}`,{password},{
             headers:{
                 "Content-Type": "application/json"
             },
@@ -106,7 +106,7 @@ export const resetpassword = (token,password) =>async(dispatch)=>{
 export const removefromPlaylist = (id) => async(dispatch) => {
     try{
         dispatch({type:"removeFromPlaylistRequest"})
-        const {data} = await axios.delete(`http://localhost:3001/api/v1/user/removeplaylist?id=${id}`,{
+        const {data} = await axios.delete(`https://coursebundler-1-788d.onrender.com/api/v1/user/removeplaylist?id=${id}`,{
             headers:{
                 "Content-Type":"application/json"
             },
