@@ -30,12 +30,22 @@ exports.registeruser = async (req, res,next) => {
                 url: mycloud.secure_url
             }
         });
-        res.status(201).json({
+
+        const token = user.getJWTToken();
+        const options = {
+            expires: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000), // 15 days instead of hours
+            httpOnly: true,
+            sameSite: 'Lax', // Helps with CSRF protection
+            secure: process.env.NODE_ENV === 'production', // Only use secure in production
+            path: '/' // Ensure the cookie is available across your entire site
+        };
+        res.status(201).cookie("token", token,options).json({
             status: "success",
-            message: "user created successfully",
-                user
-            
+            message: "user registered  in successfully",
+            user,
+            token
         });
+      
     } catch (err) {
         return next(err);
     }
@@ -57,10 +67,12 @@ exports.loginuser = async (req, res,next) => {
         }
         const token = user.getJWTToken();
         const options = {
-            expires: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000),
+            expires: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000), // 15 days instead of hours
             httpOnly: true,
-        
-        }
+            sameSite: 'Lax', // Helps with CSRF protection
+            secure: process.env.NODE_ENV === 'production', // Only use secure in production
+            path: '/' // Ensure the cookie is available across your entire site
+        };
         res.status(201).cookie("token", token,options).json({
             status: "success",
             message: "user logged in successfully",

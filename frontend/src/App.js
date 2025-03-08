@@ -24,11 +24,14 @@ import Createcourse from './component/admin/Createcourse'
 import AdminCourses from './component/admin/AdminCourses'
 import Users from './component/admin/Users'
 import {Toaster} from 'react-hot-toast'
+import CodeEditor from './component/codeedior/CodeEditor'
+import MockInterview from './component/interview/MockInterview'
 import { useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { getmyprofile } from './redux/actions/user'
 import {ProtectedRoute} from 'protected-route-react'
 import Loader from './component/layout/Loader'
+import QuizApp from './component/quiz/QuizApp'
 const App = () => {
   const dispatch = useDispatch()
   window.addEventListener('contextmenu', e => e.preventDefault())
@@ -39,7 +42,9 @@ const App = () => {
   
   return (
     <BrowserRouter>
-    {loading ? (<Loader/>):(<>
+    {/* {loading ? (<Loader/>):( */}
+      
+      <>
       <Header user={user} isAuthenticated={isAuthenticated}/>
       <Routes>
         <Route path="/" element={<Home />}/>
@@ -49,7 +54,7 @@ const App = () => {
         <Route path='/updateprofile' element={<ProtectedRoute isAuthenticated = {isAuthenticated}><UpdateProfile/></ProtectedRoute>}/>
         <Route path='/changepassword' element={<ProtectedRoute isAuthenticated = {isAuthenticated}><Changepassword/></ProtectedRoute>}/>
         <Route path='/login' element={<ProtectedRoute isAuthenticated = {!isAuthenticated} redirect='/profile'><Login/></ProtectedRoute>}/>
-        <Route path='/register' element={<ProtectedRoute isAuthenticated = {!isAuthenticated} redirect='/profile'><Register/></ProtectedRoute>}/>
+        <Route path='/register' element={<ProtectedRoute isAuthenticated = {!isAuthenticated} redirect='/login'><Register/></ProtectedRoute>}/>
         <Route path='/forgotpassword' element={<ProtectedRoute isAuthenticated = {!isAuthenticated} redirect='/profile'><Forgetpassword/></ProtectedRoute>}/>
         <Route path='/resetpassword/:token' element={<ProtectedRoute isAuthenticated = {!isAuthenticated} redirect='/profile'><Resetpassword/></ProtectedRoute>}/>
         <Route path='/contact' element={<Contact/>}/>
@@ -59,6 +64,9 @@ const App = () => {
         <Route path='*' element={<Notfound/>}/>
         <Route path = '/paymentsuccess' element={<Paymentsucc/>}/>
         <Route path='/payfail' element={<Paymentfail/>}/>
+        <Route path='/quiz' element={<QuizApp/>}/>
+        <Route path='/codeeditor' element={<CodeEditor/>}/>
+        <Route path='/mockint' element={<MockInterview/>}/>
         <Route path='/admin/dashboard' element={<ProtectedRoute isAuthenticated = {isAuthenticated} adminRoute = {true} isAdmin={user && user.role === 'admin'}><Dashboard/></ProtectedRoute>}/>
         <Route path='/admin/createcourses' element={<ProtectedRoute isAuthenticated = {isAuthenticated} adminRoute = {true} isAdmin={user && user.role === 'admin'}><Createcourse/></ProtectedRoute>}/>
         <Route path='/admin/courses' element={<ProtectedRoute isAuthenticated = {isAuthenticated} adminRoute = {true} isAdmin={user && user.role === 'admin'}><AdminCourses/></ProtectedRoute>}></Route>
@@ -66,10 +74,13 @@ const App = () => {
       </Routes>
       <Footer/>
       <Toaster/>
-    </>)}
+    </>
+    {/* )} */}
     
     </BrowserRouter>
   )
 }
 
 export default App
+
+

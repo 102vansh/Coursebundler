@@ -1,88 +1,240 @@
-import { Button, Container, Heading ,Input, Stack, VStack } from '@chakra-ui/react'
-import React, { useEffect } from 'react'
-import { Image } from '@chakra-ui/react'
-import { Text } from '@chakra-ui/react'
-import { HStack } from '@chakra-ui/react'
+import { 
+  Button, Container, Heading, Input, VStack, 
+  Grid, Text, HStack, Box, Image, Badge, 
+  Flex, useColorModeValue, InputGroup, InputLeftElement,
+  Tag, TagLabel, Icon, Divider
+} from '@chakra-ui/react'
+import React, { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { useDispatch, useSelector } from 'react-redux'
 import { getallcourses } from '../../redux/actions/course'
 import { addtoPlaylist, getmyprofile } from '../../redux/actions/user'
+import { FaSearch, FaBookOpen, FaEye, FaUserAlt, FaPlus, FaPlay } from 'react-icons/fa'
 
 const Courses = () => {
-  const{id} = useParams()
-  
-  const{loading,courses,error} = useSelector(state=>state.course)
+  const { id } = useParams()
+  const { loading, courses, error } = useSelector(state => state.course)
   const dispatch = useDispatch()
-     const [keywoard,setkeyword]=React.useState("")
-    const [category,setcategory]=React.useState("")
-    console.log(keywoard,category)
+  const [keyword, setKeyword] = useState("")
+  const [category, setCategory] = useState("")
+  
+  const categories = [
+    'Web Development', 
+    'Data Science', 
+    'Machine Learning', 
+    'Blockchain', 
+    'Artificial Intelligence', 
+    'Dsa'
+  ]
+  
+  const addtoplaylist = async(courseid) => {
+    await dispatch(addtoPlaylist(courseid))
+    dispatch(getmyprofile())
+  }
 
-    
-    const categories =['Web Development','Data Science','Machine Learning','Blockchain','Artificial Intelligence','Dsa']
-    const addtoplaylist=async(courseid)=>{
-    
-         await dispatch(addtoPlaylist(courseid))
-        console.log(courseid)
-        dispatch(getmyprofile())
+  useEffect(() => {
+    dispatch(getallcourses(category, keyword))
+  }, [category, keyword, dispatch]) 
       
-    }
+  const Course = ({views, title, description, imagesrc, creator, id, lecturecount}) => {
+    const cardBg = useColorModeValue('white', 'gray.800')
+    const cardBorder = useColorModeValue('gray.200', 'gray.700')
+    
+    return (
+      <Box 
+        bg={cardBg}
+        borderWidth="1px"
+        borderColor={cardBorder}
+        borderRadius="lg"
+        overflow="hidden"
+        transition="all 0.3s"
+        _hover={{ 
+          transform: 'translateY(-5px)', 
+          boxShadow: 'xl',
+          borderColor: 'yellow.400'
+        }}
+      >
+        <Box position="relative">
+          <Image 
+            src={imagesrc} 
+            alt={title}
+            objectFit="cover"
+            height="200px"
+            width="100%"
+          />
+          <Badge 
+            position="absolute" 
+            top="10px" 
+            right="10px" 
+            colorScheme="yellow" 
+            fontSize="0.8em"
+            borderRadius="full" 
+            px="2"
+          >
+            <Flex align="center">
+              <Icon as={FaEye} mr="1" />
+              {views} views
+            </Flex>
+          </Badge>
+        </Box>
 
+        <Box p="5">
+          <Heading 
+            fontSize="xl" 
+            fontWeight="semibold" 
+            lineHeight="tight" 
+            isTruncated
+            mb={2}
+          >
+            {title}
+          </Heading>
+          
+          <Text 
+            fontSize="md" 
+            color="gray.600" 
+            noOfLines={2} 
+            mb={4}
+          >
+            {description}
+          </Text>
+          
+          <Divider mb={4} />
+          
+          <Flex justify="space-between" align="center" mb={4}>
+            <Flex align="center">
+              <Icon as={FaUserAlt} color="yellow.500" mr="2" />
+              <Text fontSize="sm" fontWeight="medium">{creator}</Text>
+            </Flex>
+            
+            <Flex align="center">
+              <Icon as={FaBookOpen} color="yellow.500" mr="2" />
+              <Text fontSize="sm" fontWeight="medium">{lecturecount} lectures</Text>
+            </Flex>
+          </Flex>
+          
+          <Flex mt={3} justify="space-between">
+            <Link to={`/course/${id}`}>
+              <Button 
+                leftIcon={<FaPlay />}
+                colorScheme="yellow" 
+                variant="solid" 
+                size="sm"
+                _hover={{ transform: 'translateY(-2px)', boxShadow: 'md' }}
+              >
+                {loading ? 'Loading...' : 'Watch Now'}
+              </Button>
+            </Link>
+            <Button 
+              leftIcon={<FaPlus />}
+              colorScheme="yellow" 
+              variant="outline" 
+              size="sm"
+              onClick={() => addtoplaylist(id)}
+              _hover={{ transform: 'translateY(-2px)', boxShadow: 'md' }}
+            >
+              {loading ? 'Loading...' : 'Add to Playlist'}
+            </Button>
+          </Flex>
+        </Box>
+      </Box>
+    )
+  }
 
-    useEffect(()=>{
-      console.log(keywoard,category)
-      dispatch(getallcourses(category,keywoard))
-
-          },[category,keywoard,dispatch]) 
+  return (
+    <Container maxW="container.xl" py={8}>
+      <Box mb={8} textAlign="center">
+        <Heading 
+          as="h1" 
+          size="xl" 
+          mb={4}
+          bgGradient="linear(to-r, yellow.400, yellow.600)"
+          bgClip="text"
+          fontWeight="extrabold"
+        >
+          Explore Our Courses
+        </Heading>
+        <Text color="gray.600" fontSize="lg">
+          Enhance your skills with our expert-led courses
+        </Text>
+      </Box>
       
-    const Course = ({views,title,description,imagesrc,creator,id,lecturecount}) => {
+      <Box mb={6}>
+        <InputGroup size="lg" mb={6}>
+          <InputLeftElement pointerEvents="none">
+            <FaSearch color="gray.300" />
+          </InputLeftElement>
+          <Input
+            value={keyword}
+            placeholder="Search for courses..."
+            onChange={(e) => setKeyword(e.target.value)}
+            focusBorderColor="yellow.400"
+            borderRadius="full"
+            boxShadow="sm"
+          />
+        </InputGroup>
         
-        return (
-            <VStack boxShadow={"rgba(0, 0, 0, 0.35) 0px 5px 15px;"} className='course' alignItems={["center","flex-start"]}>
-<Image ml={'5'} src={imagesrc} boxSize={"60"} objectFit={"contain"} />
-<Heading ml={"5"} mt={"5"} textAlign={["center","left"]}  maxW={'200px'} fontFamily={'sans-serif'} children={title} size={"sm"} />
-
-<Text ml={"5"} noOfLines={3} textAlign={["center","left"]} children={description} />
-<HStack ml={'7'} mt={'2'} spacing={"4"}>
-    <Text fontWeight={"bold"} children={`Creator : ${creator}`} textTransform={"uppercase"}></Text>
-    <Text fontWeight={"bold"} children={`Lectures : ${lecturecount}`} textTransform={"uppercase"}></Text>
-</HStack>
-<Heading ml={"5"} mt={"2"} textAlign={["center","left"]} size={"sm"} children={`Views : ${views}`} />
-<Stack direction={['column','row']} alignItems={["center","flex-start"]} >
-
-</Stack>
-<Stack direction={['column','row']} flexWrap={"wrap"} justifyContent={['flex-start',"space-evenly"]} alignItems={["center","flex-start"]} >
-<Link ml={"8"} to={`/course/${id}`}><Button colorScheme="yellow" >{loading? 'loading...': 'Watch now'}</Button></Link>
-<Button ml={"3"} variant={'ghost'} colorScheme="yellow" onClick={()=>addtoplaylist(id)}>{loading? 'loading...': 'Add to playlist'}</Button>
-</Stack>
-
-            </VStack>
-        )
-    }
-  return (
-<Container minH={"100vh"} maxW={"container.lg"} p={"8"}>
-<Heading children="All courses" m={"8"}  />
-<Input value={keywoard} placeholder="Search for courses" m={"2"} onChange={(e)=>setkeyword(e.target.value)} focusBorderColor='yellow.500' type='text'/>
-<HStack overflowX={"auto"} paddingY={"8"} css={{'&::-webkit-scrollbar':{display:"none"}}} >
-{categories.map((item,index)=>{
-  return (
-  
-    <Button key={index} onClick={()=>setcategory(item)} minW={"60"} colorScheme="yellow" children={item}></Button>
-  )
-})}
-
-</HStack>
-
-{/* <Course title="web development" views="2k" description="this is the description" imagesrc="https://images.unsplash.com/photo-1661956600684-97d3a4320e45?ixlib=rb-4.0.3&ixid=MnwxMjA3fDF8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1170&q=80" creator="John" lecturecount="10" id={1} addtoplaylist={addtoplaylist}  /> 
-*/}{
-  courses.length>0 ?(
-    courses?.map((item,index)=>(
-    <Course key={item._id} title={item.title} views={item.views} description={item.description} imagesrc={item.poster.url} creator={item.createdBy} lecturecount={item.numOfVideos} id={item._id} addtoplaylist={addtoplaylist} />
-  ))
-  ):(
-    <Heading>No courses found</Heading>)
-  
-}
-</Container>
+        <Box overflowX="auto" pb={4} mb={4}>
+          <Flex wrap="nowrap" gap={3} paddingY={2}>
+            <Button
+              key="all"
+              onClick={() => setCategory("")}
+              colorScheme={category === "" ? "yellow" : "gray"}
+              variant={category === "" ? "solid" : "outline"}
+              borderRadius="full"
+              size="md"
+              minW="auto"
+              px={4}
+            >
+              All
+            </Button>
+            
+            {categories.map((item, index) => (
+              <Button
+                key={index}
+                onClick={() => setCategory(item)}
+                colorScheme={category === item ? "yellow" : "gray"}
+                variant={category === item ? "solid" : "outline"}
+                borderRadius="full"
+                size="md"
+                minW="auto"
+                px={4}
+              >
+                {item}
+              </Button>
+            ))}
+          </Flex>
+        </Box>
+      </Box>
+      
+      {courses.length > 0 ? (
+        <Grid 
+          templateColumns={{
+            base: "repeat(1, 1fr)",
+            md: "repeat(2, 1fr)",
+            lg: "repeat(3, 1fr)"
+          }}
+          gap={6}
+        >
+          {courses?.map((item) => (
+            <Course
+              key={item._id}
+              title={item.title}
+              views={item.views}
+              description={item.description}
+              imagesrc={item.poster.url}
+              creator={item.createdBy}
+              lecturecount={item.numOfVideos}
+              id={item._id}
+            />
+          ))}
+        </Grid>
+      ) : (
+        <Box textAlign="center" py={10}>
+          <Heading size="lg" color="gray.500">No courses found</Heading>
+          <Text mt={2}>Try adjusting your search or browse all courses</Text>
+        </Box>
+      )}
+    </Container>
   )
 }
 
