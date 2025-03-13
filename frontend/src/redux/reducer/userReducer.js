@@ -57,7 +57,8 @@ export const userReducer = createReducer(initialstate, (builder) => {
     .addCase('logoutFailure', (state, action) => {
       state.loading = false;
       state.error = action.payload.error;
-    }).addCase('RegisterRequest', (state) => {
+    })
+    .addCase('RegisterRequest', (state) => {
       state.loading = true;
     })
     .addCase('RegisterSuccess', (state, action) => {
@@ -89,12 +90,14 @@ export const updateprofileReducer = createReducer({}, (builder) => {
       state.loading = false;
       state.isAuthenticated = false;
       state.error = action.payload.error;
-    }).addCase('clearError', (state) => {
+    })
+    .addCase('clearError', (state) => {
       state.error = null;
     })
     .addCase('clearMessage', (state) => {
       state.message = null;
-    }).addCase('changePasswordRequest', (state) => {
+    })
+    .addCase('changePasswordRequest', (state) => {
       state.loading = true;
     })
     .addCase('changePasswordSuccess', (state, action) => {
@@ -107,7 +110,8 @@ export const updateprofileReducer = createReducer({}, (builder) => {
       state.loading = false;
       state.isAuthenticated = false;
       state.error = action.payload.error;
-    }).addCase('updatepictureRequest', (state) => {
+    })
+    .addCase('updatepictureRequest', (state) => {
       state.loading = true;
     })
     .addCase('updatepictureSuccess', (state, action) => {
@@ -120,7 +124,8 @@ export const updateprofileReducer = createReducer({}, (builder) => {
       state.loading = false;
       state.isAuthenticated = false;
       state.error = action.payload.error;
-    }).addCase('forgetpasswordRequest', (state) => {
+    })
+    .addCase('forgetpasswordRequest', (state) => {
       state.loading = true;
     })
     .addCase('forgetpasswordSuccess', (state, action) => {
@@ -133,7 +138,8 @@ export const updateprofileReducer = createReducer({}, (builder) => {
       state.loading = false;
       state.isAuthenticated = false;
       state.error = action.payload.error;
-    }).addCase('resetpasswordRequest', (state) => {
+    })
+    .addCase('resetpasswordRequest', (state) => {
       state.loading = true;
     })
     .addCase('resetpasswordSuccess', (state, action) => {
@@ -146,12 +152,15 @@ export const updateprofileReducer = createReducer({}, (builder) => {
       state.loading = false;
       state.isAuthenticated = false;
       state.error = action.payload.error;
-    }).addCase({type:'removeFromPlaylistRequest'},(state)=>{
+    })
+    .addCase({type:'removeFromPlaylistRequest'},(state)=>{
       state.loading = true
-    }).addCase({type:'removeFromPlaylistSuccess'},(state,action)=>{
+    })
+    .addCase({type:'removeFromPlaylistSuccess'},(state,action)=>{
       state.loading = false
       state.message = action.payload
-    }).addCase({type:'removeFromPlaylistFailure'},(state,action)=>{
+    })
+    .addCase({type:'removeFromPlaylistFailure'},(state,action)=>{
       state.loading = false
       state.error = action.payload
     })
@@ -161,22 +170,29 @@ export const subscriptionreducer = createReducer({}, (builder) => {
   builder
     .addCase({type:'buysubscribeRequest'},(state)=>{
       state.loading = true
-    }).addCase({type:'buysubscribeSuccess'},(state,action)=>{
+    })
+    .addCase({type:'buysubscribeSuccess'},(state,action)=>{
       state.loading = false
       state.subscriptionId = action.payload
-    }).addCase({type:'buysubscribeFailure'},(state,action)=>{
+    })
+    .addCase({type:'buysubscribeFailure'},(state,action)=>{
       state.loading = false
       state.error = action.payload
-    }).addCase({type:'clearError'},(state)=>{
+    })
+    .addCase({type:'clearError'},(state)=>{
       state.error = null
-    }).addCase({type:'clearMessage'},(state)=>{
+    })
+    .addCase({type:'clearMessage'},(state)=>{
       state.message = null
-    }).addCase({type:'cancelsubscribeRequest'},(state)=>{
+    })
+    .addCase({type:'cancelsubscribeRequest'},(state)=>{
       state.loading = true
-    }).addCase({type:'cancelsubscribeSuccess'},(state,action)=>{
+    })
+    .addCase({type:'cancelsubscribeSuccess'},(state,action)=>{
       state.loading = false
       state.message = action.payload
-    }).addCase({type:'cancelsubscribeFailure'},(state,action)=>{
+    })
+    .addCase({type:'cancelsubscribeFailure'},(state,action)=>{
       state.loading = false
       state.error = action.payload
     })

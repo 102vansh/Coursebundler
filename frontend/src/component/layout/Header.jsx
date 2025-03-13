@@ -1,7 +1,23 @@
-import React from 'react'
-import{ColorModeSwitcher} from '../../ColorModeSwitcher'
-import { Button, Drawer, DrawerBody, DrawerContent, DrawerHeader, DrawerOverlay, HStack, useDisclosure, VStack, Box, Badge, keyframes, useColorModeValue } from '@chakra-ui/react'
-import { Link } from 'react-router-dom'
+import React, { useEffect } from 'react'
+import { ColorModeSwitcher } from '../../ColorModeSwitcher'
+import { 
+  Button, 
+  Drawer, 
+  DrawerBody, 
+  DrawerContent, 
+  DrawerHeader, 
+  DrawerOverlay, 
+  HStack, 
+  useDisclosure, 
+  VStack, 
+  Box, 
+  Badge, 
+  keyframes, 
+  useColorModeValue,
+  useToast,
+  Text
+} from '@chakra-ui/react'
+import { Link, useNavigate } from 'react-router-dom'
 import { RiDashboardFill, RiLogoutBoxLine, RiMenu5Fill, RiRobotLine } from 'react-icons/ri'
 import { useDispatch, useSelector } from 'react-redux'
 import { logoutuser } from '../../redux/actions/user'
@@ -13,23 +29,60 @@ const pulseKeyframes = keyframes`
   100% { box-shadow: 0 0 0 0 rgba(159, 122, 234, 0); }
 `;
 
-const Header = ({isAuthenticated,user}) => {
+const Header = ({ isAuthenticated, user }) => {
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const toast = useToast();
+  const { loading, error: userError } = useSelector(state => state.user);
   
-  const dispatch = useDispatch()
-  const logouthandler=()=>{
-    console.log('logout')
-    dispatch(logoutuser())
-    onClose()
+  // Handle any authentication errors
+  useEffect(() => {
+    if (userError === 'jwt expired' || userError === 'token malformed' || userError?.includes('token')) {
+      // Force logout if token is expired
+      localStorage.removeItem('token');
+      toast({
+        title: 'Session expired',
+        description: 'Your session has expired. Please login again.',
+        status: 'warning',
+        duration: 5000,
+        isClosable: true,
+      });
+    }
+  }, [userError, toast]);
+  
+  // Add this debugging console log
+  console.log("Header render - Auth state:", isAuthenticated);
+
+  const logouthandler = () => {
+    console.log('logout attempt - Auth status before:', isAuthenticated);
+    
+    // Always perform logout, regardless of authentication state
+    dispatch(logoutuser());
+    
+    // Force a page reload after logout to ensure state is reset
+    setTimeout(() => {
+      window.location.href = '/';
+    }, 1000);
+    
+    toast({
+      title: 'Logged out',
+      description: 'You have been successfully logged out',
+      status: 'success',
+      duration: 3000,
+      isClosable: true,
+    });
+    
+    onClose();
   }
 
-  const{isOpen,onOpen,onClose} = useDisclosure()
+  const { isOpen, onOpen, onClose } = useDisclosure();
   const pulseAnimation = `${pulseKeyframes} 2s infinite`;
   const gradientBg = useColorModeValue(
     'linear(to-r, purple.400, pink.400)', 
     'linear(to-r, purple.600, pink.600)'
   );
   
-  const LinkButton = ({url='/',title = 'Home',onClose, isNewFeature}) => {
+  const LinkButton = ({ url='/', title='Home', onClose, isNewFeature }) => {
     if (isNewFeature) {
       return (
         <Link onClick={onClose} to={url}>
@@ -91,17 +144,21 @@ const Header = ({isAuthenticated,user}) => {
               <LinkButton onClose={onClose} url='/quiz' title='AI Quiz' isNewFeature={true}></LinkButton>
               <LinkButton onClose={onClose} url='/codeeditor' title='codeeditor' isNewFeature={true}></LinkButton>
               <LinkButton onClose={onClose} url='/mockint' title='mockinterview' isNewFeature={true}></LinkButton>
+              <Text fontSize="xs" color="gray.500">Debug: {isAuthenticated ? 'Authenticated' : 'Not Authenticated'}</Text>
               <HStack justifyContent={'space-evenly'} position={'absolute'} bottom={'2rem'} width={'80%'}>
                 {isAuthenticated ? (
                   <>
                     <VStack display={'flex'}>
                       <HStack spacing={'4'} mb={'4'}>
                         <Link to={'/profile'}><Button colorScheme={'yellow'}>Profile</Button></Link>
-                        <Link to={'/'}><Button onClick={logouthandler} colorScheme={'yellow'}><RiLogoutBoxLine/>Logout</Button></Link>
+                        <Button onClick={logouthandler} colorScheme={'yellow'}>
+                          <RiLogoutBoxLine style={{marginRight:'5px'}}/>
+                          Logout
+                        </Button>
                       </HStack>
                       {user && user.role === 'admin' && (
                         <Link onClick={onClose} to={'/admin/dashboard'}>
-                          <Button   colorScheme={'pink'}><RiDashboardFill style={{margin:'5px'}}/>
+                          <Button colorScheme={'pink'}><RiDashboardFill style={{margin:'5px'}}/>
                           Dashboard</Button>
                         </Link>
                       )}
@@ -110,8 +167,8 @@ const Header = ({isAuthenticated,user}) => {
                 ) : (
                   <>
                     <Link onClick={onClose} to={'/login'}><Button colorScheme={'yellow'}>Login</Button></Link>
-                    <p>OR</p>
-                    <Link onClick={onClose} to={'/register'}><Button  colorScheme={'yellow'}>Sign Up</Button></Link>
+                    <Text>OR</Text>
+                    <Link onClick={onClose} to={'/register'}><Button colorScheme={'yellow'}>Sign Up</Button></Link>
                   </>
                 )}
               </HStack>

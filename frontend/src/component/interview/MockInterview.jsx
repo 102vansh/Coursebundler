@@ -1,9 +1,6 @@
 // MockInterviewApp.js - All-in-one AI Mock Interview component with Tailwind CSS
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import axios from 'axios';
-import { useNavigate, useParams } from 'react-router-dom';
-import Webcam from 'react-webcam';
-import SpeechRecognition, { useSpeechRecognition } from 'react-speech-recognition';
 import {
   Box,
   Container,
@@ -25,427 +22,601 @@ import {
   Alert,
   AlertIcon,
   Divider,
-  Textarea
+  Textarea,
+  NumberInput,
+  NumberInputField,
+  NumberInputStepper,
+  NumberIncrementStepper,
+  NumberDecrementStepper,
+  Switch
 } from '@chakra-ui/react';
-import { FaPlay, FaStop, FaMicrophone, FaVideo, FaArrowRight, FaArrowLeft } from 'react-icons/fa';
+import { FaPlay, FaStop, FaMicrophone, FaMicrophoneSlash, FaVideo, FaVideoSlash, FaArrowRight, FaArrowLeft } from 'react-icons/fa';
+
+// API base URL - change this to your backend server URL
+const API_BASE_URL = 'http://localhost:3001/api/v1';
 
 const MockInterview = () => {
   // State variables
-  const [step, setStep] = useState('setup'); // setup, recording, feedback, complete
+  const [step, setStep] = useState('setup');
   const [topic, setTopic] = useState('');
-  const [customTopic, setCustomTopic] = useState('');
-  const [experience, setExperience] = useState('Intermediate');
-  const [loading, setLoading] = useState(false);
+  const [experience, setExperience] = useState('beginner');
+  const [numQuestions, setNumQuestions] = useState(5);
   const [error, setError] = useState(null);
-  const [questions, setQuestions] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [interview, setInterview] = useState(null);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [answers, setAnswers] = useState([]);
   const [isRecording, setIsRecording] = useState(false);
-  const [recordedAnswers, setRecordedAnswers] = useState([]);
-  const [transcriptText, setTranscriptText] = useState('');
+  const [transcription, setTranscription] = useState('');
   const [feedback, setFeedback] = useState(null);
-  const [overallFeedback, setOverallFeedback] = useState(null);
-  const [timer, setTimer] = useState(120); // 2 minutes per question
-  
-  // References
+  const [timer, setTimer] = useState(0);
+  const [videoEnabled, setVideoEnabled] = useState(true);
+
+  // Refs
   const videoRef = useRef(null);
   const mediaRecorderRef = useRef(null);
   const streamRef = useRef(null);
-  const chunksRef = useRef([]);
-  const timerIntervalRef = useRef(null);
+  const timerRef = useRef(null);
   
-  // Hooks
+  // Toast for notifications
   const toast = useToast();
-  
-  // Topics for selection
-  const topics = [
-    'React.js',
-    'JavaScript',
-    'Node.js',
-    'Full Stack Development',
-    'Data Structures & Algorithms',
-    'System Design',
-    'Machine Learning',
-    'Python',
-    'Java',
-    'Custom'
-  ];
-  
-  // Experience levels
-  const experienceLevels = ['Beginner', 'Intermediate', 'Advanced', 'Expert'];
-  
-  // Color schemes
+
+  // Color mode values
   const bgColor = useColorModeValue('white', 'gray.800');
   const borderColor = useColorModeValue('gray.200', 'gray.700');
   const accentColor = useColorModeValue('yellow.500', 'yellow.400');
+  const textColor = useColorModeValue('gray.800', 'gray.200');
+  const formBg = useColorModeValue('white', 'gray.700');
+  const lightBg = useColorModeValue('gray.50', 'gray.600');
+  const yellowBg = useColorModeValue('yellow.50', 'yellow.900');
+  const greenBg = useColorModeValue('green.50', 'green.900');
+
+  // Experience options
+  const experienceOptions = [
+    { value: 'beginner', label: 'Beginner (0-1 years)' },
+    { value: 'intermediate', label: 'Intermediate (1-3 years)' },
+    { value: 'advanced', label: 'Advanced (3-5 years)' },
+    { value: 'expert', label: 'Expert (5+ years)' }
+  ];
+
+  // Common interview topics
+  const topicSuggestions = [
+    'React.js',
+    'Node.js',
+    'JavaScript',
+    'Python',
+    'Data Science',
+    'Machine Learning',
+    'Cloud Computing',
+    'DevOps',
+    'Full Stack Development',
+    'Software Engineering',
+    'Product Management'
+  ];
+
+  // Initialize speech recognition if available
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  const recognitionRef = useRef(null);
   
-  // Clean up resources on component unmount
+  useEffect(() => {
+    // Setup speech recognition
+    if (SpeechRecognition) {
+      recognitionRef.current = new SpeechRecognition();
+      recognitionRef.current.continuous = true;
+      recognitionRef.current.interimResults = true;
+      recognitionRef.current.lang = 'en-US';
+      
+      recognitionRef.current.onresult = (event) => {
+        let interimTranscription = '';
+        let finalTranscription = transcription;
+        
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          const transcript = event.results[i][0].transcript;
+          if (event.results[i].isFinal) {
+            finalTranscription += transcript + ' ';
+          } else {
+            interimTranscription += transcript;
+          }
+        }
+        
+        setTranscription(finalTranscription + interimTranscription);
+      };
+      
+      recognitionRef.current.onend = () => {
+        console.log("Speech recognition ended");
+        // Auto-restart recognition if we're still in recording mode
+        if (isRecording) {
+          try {
+            recognitionRef.current.start();
+            console.log("Speech recognition restarted");
+          } catch (e) {
+            console.log('Recognition already started');
+          }
+        }
+      };
+      
+      recognitionRef.current.onerror = (event) => {
+        console.error('Speech recognition error', event.error);
+        
+        if (event.error === 'not-allowed') {
+          setError('Microphone access was denied. Please allow microphone access to use this feature.');
+        } else if (event.error === 'network') {
+          // Common network error - don't display to user, just retry
+          console.log('Network error with speech recognition, restarting...');
+          
+          // Wait a moment then try to restart
+          setTimeout(() => {
+            if (isRecording && recognitionRef.current) {
+              try {
+                recognitionRef.current.stop();
+                setTimeout(() => {
+                  recognitionRef.current.start();
+                  console.log("Restarted speech recognition after network error");
+                }, 1000);
+              } catch (e) {
+                console.log('Error restarting speech recognition:', e);
+              }
+            }
+          }, 2000);
+        }
+      };
+    } else {
+      setError('Speech recognition is not supported in this browser. Please try Chrome or Edge.');
+    }
+    
+    return () => {
+      // Cleanup
+      if (recognitionRef.current) {
+        try {
+          recognitionRef.current.stop();
+        } catch (e) {
+          console.log('Recognition already stopped');
+        }
+      }
+      stopMediaTracks();
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+      }
+    };
+  }, [transcription, isRecording]);
+
+  // Reset states when step changes
+  useEffect(() => {
+    if (step === 'setup') {
+      stopMediaTracks();
+      setInterview(null);
+      setAnswers([]);
+      setTranscription('');
+      setFeedback(null);
+      setCurrentQuestionIndex(0);
+      setTimer(0);
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
+    }
+    
+    if (step === 'recording' && interview) {
+      // Initialize camera and audio
+      initMediaDevices();
+    }
+  }, [step]);
+
+  // Stop media tracks when component unmounts
   useEffect(() => {
     return () => {
       stopMediaTracks();
-      if (timerIntervalRef.current) {
-        clearInterval(timerIntervalRef.current);
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
       }
     };
   }, []);
-  
-  // Stop all media tracks
+
+  // Initialize camera and audio
+  const initMediaDevices = async () => {
+    try {
+      stopMediaTracks(); // Clean up any existing streams
+      
+      // Set up media constraints based on videoEnabled state
+      const constraints = { 
+        audio: true,
+        video: videoEnabled ? { width: 640, height: 480 } : false
+      };
+      
+      console.log('Requesting media with constraints:', constraints);
+      
+      const stream = await navigator.mediaDevices.getUserMedia(constraints);
+      console.log('Media stream obtained:', stream);
+      
+      // Save the stream
+      streamRef.current = stream;
+      
+      // Only set up video if it's enabled
+      if (videoEnabled && videoRef.current) {
+        videoRef.current.srcObject = stream;
+      }
+      
+      // Only notify about microphone access
+      console.log('Microphone permission granted');
+      
+      // Set up timer
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+      }
+      timerRef.current = setInterval(() => {
+        setTimer(prev => prev + 1);
+      }, 1000);
+      
+    } catch (error) {
+      console.error('Error accessing media devices:', error);
+      setError(`Could not access your ${videoEnabled ? 'camera and ' : ''}microphone. Please ensure they are connected and permissions are granted.`);
+    }
+  };
+
+  // Stop media tracks
   const stopMediaTracks = () => {
     if (streamRef.current) {
       streamRef.current.getTracks().forEach(track => track.stop());
       streamRef.current = null;
     }
-  };
-  
-  // Mock questions for development
-  const getMockQuestions = (selectedTopic) => {
-    const finalTopic = selectedTopic === 'Custom' ? customTopic : selectedTopic;
     
-    return [
-      {
-        question: `Explain the core concepts of ${finalTopic} and why they're important.`,
-        idealAnswer: `A good answer would cover the fundamental principles of ${finalTopic}, including key features, architecture, and real-world applications.`
-      },
-      {
-        question: `What are some common challenges when working with ${finalTopic}, and how do you address them?`,
-        idealAnswer: `Challenges include scalability, performance optimization, and integration. These can be addressed through proper architecture, caching strategies, and following best practices.`
-      },
-      {
-        question: `How does ${finalTopic} compare to other similar technologies in the industry?`,
-        idealAnswer: `${finalTopic} offers advantages such as [specific benefits], but has limitations in [specific areas] compared to alternatives like [competitors].`
-      },
-      {
-        question: `Describe a complex problem you solved using ${finalTopic}.`,
-        idealAnswer: `A good answer would describe the problem context, approach taken, implementation details, challenges faced, and the final results achieved.`
-      },
-      {
-        question: `How do you keep up with the latest developments in ${finalTopic}?`,
-        idealAnswer: `Staying current involves following authoritative resources, participating in communities, reading documentation, taking courses, and building personal projects.`
-      }
-    ];
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
+    }
   };
-  
-  // Start the interview setup
-  const handleStartInterview = () => {
-    if (!topic) {
-      setError('Please select a topic');
+
+  // Toggle video
+  const toggleVideo = () => {
+    const newVideoEnabled = !videoEnabled;
+    setVideoEnabled(newVideoEnabled);
+    
+    // Reinitialize media devices with new settings
+    if (step === 'recording') {
+      initMediaDevices();
+    }
+  };
+
+  // Format time
+  const formatTime = (seconds) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+  };
+
+  // Start recording
+  const startRecording = async () => {
+    if (!recognitionRef.current) {
+      setError('Speech recognition is not supported in your browser.');
       return;
     }
     
-    if (topic === 'Custom' && !customTopic) {
-      setError('Please enter a custom topic');
+    setTranscription('');
+    setIsRecording(true);
+    
+    try {
+      recognitionRef.current.start();
+      console.log('Speech recognition started');
+      
+      toast({
+        title: 'Recording started',
+        description: 'Speak clearly into your microphone',
+        status: 'info',
+        duration: 3000,
+        isClosable: true,
+      });
+    } catch (error) {
+      console.error('Error starting recording:', error);
+      setError('Could not start recording. Please refresh and try again.');
+    }
+  };
+
+  // Stop recording
+  const stopRecording = () => {
+    setIsRecording(false);
+    
+    try {
+      recognitionRef.current.stop();
+      console.log('Speech recognition stopped');
+      
+      // Save the answer
+      const newAnswers = [...answers];
+      newAnswers[currentQuestionIndex] = transcription.trim();
+      setAnswers(newAnswers);
+      
+      toast({
+        title: 'Recording stopped',
+        description: 'Your answer has been saved',
+        status: 'success',
+        duration: 3000,
+        isClosable: true,
+      });
+    } catch (error) {
+      console.error('Error stopping recording:', error);
+    }
+  };
+
+  // Start the interview
+  const startInterview = async () => {
+    if (!topic) {
+      setError('Please select or enter a topic');
       return;
     }
     
     setLoading(true);
     setError(null);
     
-    // For development, use mock data
-    setTimeout(() => {
-      const selectedTopic = topic === 'Custom' ? customTopic : topic;
-      const mockQuestions = getMockQuestions(selectedTopic);
-      
-      setQuestions(mockQuestions);
-      setRecordedAnswers(new Array(mockQuestions.length).fill(null));
-      setCurrentQuestionIndex(0);
-      setStep('recording');
-      setLoading(false);
-      
-      toast({
-        title: 'Interview Ready',
-        description: `Your ${selectedTopic} interview has been prepared`,
-        status: 'success',
-        duration: 3000,
-        isClosable: true
-      });
-    }, 1000);
-  };
-  
-  // Initialize camera and microphone
-  const initializeMediaDevices = async () => {
     try {
-      // First stop any existing media tracks
-      stopMediaTracks();
-      
-      // Request new media stream
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: true,
-        audio: true
-      });
-      
-      streamRef.current = stream;
-      
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-      }
-      
-      // Reset recording chunks
-      chunksRef.current = [];
-      
-      return true;
-    } catch (err) {
-      console.error("Media device error:", err);
-      setError(`Camera/microphone access error: ${err.message}`);
-      return false;
-    }
-  };
-  
-  // Start recording
-  const startRecording = async () => {
-    try {
-      setError(null);
-      
-      // Initialize media devices first
-      const initialized = await initializeMediaDevices();
-      if (!initialized) return;
-      
-      // Create media recorder
-      try {
-        mediaRecorderRef.current = new MediaRecorder(streamRef.current, {
-          mimeType: 'video/webm;codecs=vp9,opus'
-        });
-      } catch (e) {
-        // Fallback if preferred codec not supported
-        mediaRecorderRef.current = new MediaRecorder(streamRef.current);
-      }
-      
-      // Set up event handlers
-      mediaRecorderRef.current.ondataavailable = (event) => {
-        if (event.data && event.data.size > 0) {
-          chunksRef.current.push(event.data);
+      // Make API call to create interview
+      const response = await axios.post(`${API_BASE_URL}/interview/create`, {
+        topic,
+        experience,
+        numQuestions
+      }, {
+        withCredentials: true,
+        headers: {
+          'Content-Type': 'application/json'
         }
-      };
+      });
       
-      mediaRecorderRef.current.onstop = () => {
-        // Process the recorded chunks
-        const blob = new Blob(chunksRef.current, { type: 'video/webm' });
-        const url = URL.createObjectURL(blob);
-        
-        // Store the answer for this question
-        const newAnswers = [...recordedAnswers];
-        newAnswers[currentQuestionIndex] = {
-          blob,
-          url,
-          text: generateMockTranscription(topic, currentQuestionIndex)
-        };
-        setRecordedAnswers(newAnswers);
-        
-        // Generate simulated feedback
-        processAnswer();
-      };
+      const interviewData = response.data;
       
-      // Start recording
-      mediaRecorderRef.current.start();
-      setIsRecording(true);
+      // Initialize answers array with empty strings
+      const initialAnswers = Array(interviewData.questions.length).fill('');
       
-      // Start timer
-      setTimer(120);
-      timerIntervalRef.current = setInterval(() => {
-        setTimer(prev => {
-          if (prev <= 1) {
-            stopRecording();
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
-    } catch (err) {
-      console.error("Recording error:", err);
-      setError(`Recording error: ${err.message}`);
-    }
-  };
-  
-  // Stop recording
-  const stopRecording = () => {
-    try {
-      if (timerIntervalRef.current) {
-        clearInterval(timerIntervalRef.current);
-      }
-      
-      if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
-        mediaRecorderRef.current.stop();
-      }
-      
-      setIsRecording(false);
-    } catch (err) {
-      console.error("Stop recording error:", err);
-      setError(`Error stopping recording: ${err.message}`);
-    }
-  };
-  
-  // Generate mock transcription (simulating speech-to-text)
-  const generateMockTranscription = (selectedTopic, questionIndex) => {
-    const topicName = selectedTopic === 'Custom' ? customTopic : selectedTopic;
-    
-    const transcriptions = [
-      `${topicName} is a powerful technology that offers several key features. First, it provides a robust framework for building scalable applications. Second, it has excellent documentation and community support. Finally, it integrates well with other technologies in the ecosystem.`,
-      
-      `When working with ${topicName}, I often encounter challenges related to performance optimization. I address these by implementing proper caching strategies, code splitting, and following best practices. Another common issue is managing state, which I solve by using appropriate state management patterns.`,
-      
-      `Compared to alternatives, ${topicName} offers better developer experience and performance. While some technologies might have more features, ${topicName} strikes a good balance between functionality and simplicity. Its ecosystem is also more mature compared to newer alternatives.`,
-      
-      `I once worked on a project where we needed to process large amounts of data in real-time using ${topicName}. The challenge was maintaining performance while handling concurrent connections. I implemented a solution using efficient algorithms and optimization techniques, which resulted in a 40% performance improvement.`,
-      
-      `To stay current with ${topicName}, I regularly follow official documentation, participate in online communities, attend webinars, and build personal projects to experiment with new features. I also read technical blogs from industry experts and contribute to open-source projects when possible.`
-    ];
-    
-    return transcriptions[questionIndex] || `This is a sample answer about ${topicName} for question ${questionIndex + 1}.`;
-  };
-  
-  // Process the answer and provide feedback
-  const processAnswer = () => {
-    setLoading(true);
-    
-    // Simulate API call with delay
-    setTimeout(() => {
-      const mockFeedback = {
-        score: Math.floor(Math.random() * 3) + 7, // 7-9 range
-        technicalAccuracy: `Your explanation of ${topic} concepts was accurate and demonstrated good understanding of the fundamentals.`,
-        communicationClarity: `You communicated your thoughts clearly and with good structure. Consider using more specific examples to illustrate key points.`,
-        positives: [
-          "Strong technical knowledge demonstrated",
-          "Well-structured response",
-          "Good explanation of core concepts"
-        ],
-        improvements: [
-          "Could provide more specific examples",
-          "Consider addressing edge cases",
-          "Elaborate more on practical applications"
-        ],
-        suggestions: [
-          "Practice explaining complex topics in simpler terms",
-          "Prepare concrete examples from your experience",
-          "Focus on highlighting problem-solving approaches"
-        ]
-      };
-      
-      setFeedback(mockFeedback);
-      setStep('feedback');
-      setLoading(false);
-      
-      // Also update transcript
-      setTranscriptText(recordedAnswers[currentQuestionIndex]?.text || '');
-    }, 2000);
-  };
-  
-  // Move to next question
-  const handleNextQuestion = () => {
-    if (currentQuestionIndex < questions.length - 1) {
-      setCurrentQuestionIndex(currentQuestionIndex + 1);
-      setFeedback(null);
+      setInterview(interviewData);
+      setAnswers(initialAnswers);
       setStep('recording');
-    } else {
-      // Complete the interview
-      completeInterview();
+      
+    } catch (error) {
+      console.error('Error creating interview:', error);
+      
+      // For demo/testing when backend is not available
+      if (error.message.includes('Network Error') || !API_BASE_URL.includes('localhost')) {
+        console.log('Using mock data for interview');
+        
+        // Create mock interview for testing
+        const mockInterview = {
+          _id: 'mock-interview-id',
+          topic,
+          experience,
+          questions: [
+            {
+              question: `What are the core principles of ${topic}?`,
+              idealAnswer: `The core principles of ${topic} include concepts like [specific principles]. A good answer would explain each of these in detail with practical examples.`
+            },
+            {
+              question: `How do you handle error scenarios in ${topic}?`,
+              idealAnswer: `Error handling in ${topic} typically involves strategies like [error handling approaches]. Best practices include implementing proper logging, user-friendly error messages, and graceful degradation.`
+            },
+            {
+              question: `What are the latest developments in ${topic} you find most exciting?`,
+              idealAnswer: `Recent developments in ${topic} include [new features/trends]. A strong candidate would show awareness of these advancements and explain how they solve real-world problems.`
+            },
+            {
+              question: `How would you architect a system using ${topic} for high scalability?`,
+              idealAnswer: `For high scalability with ${topic}, consider [architecture patterns]. Key factors include statelessness, horizontal scaling, caching strategies, and database optimization.`
+            },
+            {
+              question: `How do you stay updated with the latest trends in ${topic}?`,
+              idealAnswer: `Professionals stay updated on ${topic} through resources like official documentation, community forums, conferences, blogs, and hands-on practice with new features.`
+            }
+          ]
+        };
+        
+        const initialAnswers = Array(mockInterview.questions.length).fill('');
+        setInterview(mockInterview);
+        setAnswers(initialAnswers);
+        setStep('recording');
+      } else {
+        setError('Failed to create interview. Please try again later.');
+      }
+    } finally {
+      setLoading(false);
     }
   };
-  
-  // Complete the interview and generate overall feedback
-  const completeInterview = () => {
+
+  // Move to next question
+  const nextQuestion = () => {
+    // If we're on the last question, submit the interview
+    if (currentQuestionIndex === interview.questions.length - 1) {
+      submitInterview();
+      return;
+    }
+    
+    // Save the answer if we're recording
+    if (isRecording) {
+      stopRecording();
+    }
+    
+    setCurrentQuestionIndex(prev => prev + 1);
+    setTranscription('');
+  };
+
+  // Move to previous question
+  const prevQuestion = () => {
+    if (isRecording) {
+      stopRecording();
+    }
+    
+    setCurrentQuestionIndex(prev => Math.max(0, prev - 1));
+    setTranscription(answers[currentQuestionIndex - 1] || '');
+  };
+
+  // Submit interview for feedback
+  const submitInterview = async () => {
+    if (isRecording) {
+      stopRecording();
+    }
+    
     setLoading(true);
     
-    // Simulate API call
-    setTimeout(() => {
-      const mockOverallFeedback = {
-        overallScore: 8,
-        strengths: [
-          "Strong technical knowledge",
-          "Clear communication style",
-          "Structured responses to complex questions"
-        ],
-        weaknesses: [
-          "Could provide more specific examples",
-          "Some answers lacked depth in certain areas",
-          "Occasionally used technical jargon without explanation"
-        ],
-        technicalEvaluation: `You demonstrated solid understanding of ${topic} principles and concepts. Your technical knowledge appears up-to-date with current industry standards.`,
-        communicationEvaluation: "Your communication was clear and well-structured. You articulated complex ideas effectively, though sometimes could benefit from more concise explanations.",
-        recommendations: [
-          "Practice explaining technical concepts to non-technical audiences",
-          "Prepare more diverse examples from your experience",
-          "Focus on connecting theoretical knowledge to practical applications"
-        ]
-      };
+    try {
+      // Submit answers to API
+      const response = await axios.post(`${API_BASE_URL}/interview/${interview._id}/submit`, {
+        answers
+      }, {
+        withCredentials: true
+      });
       
-      setOverallFeedback(mockOverallFeedback);
-      setStep('complete');
-      setLoading(false);
-    }, 3000);
+      setFeedback(response.data.feedback);
+      setStep('feedback');
+      
+    } catch (error) {
+      console.error('Error submitting interview:', error);
+      
+      // For demo/testing when backend is not available
+      if (error.message.includes('Network Error') || !API_BASE_URL.includes('localhost')) {
+        console.log('Using mock data for feedback');
+        
+        // Create mock feedback for testing
+        const mockFeedback = {
+          overallScore: 7.5,
+          summary: `Overall, you demonstrated a good understanding of ${topic}. Your answers were generally well-structured and showed technical knowledge. Areas for improvement include providing more specific examples and going deeper into technical details where appropriate.`,
+          questionFeedback: interview.questions.map((q, i) => ({
+            question: q.question,
+            userAnswer: answers[i] || "No answer provided",
+            idealAnswer: q.idealAnswer,
+            feedback: answers[i] 
+              ? `Your answer covered the main points about ${topic}. You could improve by being more specific about [technical details]. Good job mentioning [something from their answer].` 
+              : "No answer was provided for this question.",
+            score: answers[i] ? 7 + Math.random() * 2 : 5
+          }))
+        };
+        
+        setFeedback(mockFeedback);
+        setStep('feedback');
+      } else {
+        setError('Failed to submit interview. Please try again later.');
+        setLoading(false);
+      }
+    } finally {
+      if (!error) {
+        setLoading(false);
+      }
+    }
   };
-  
-  // Reset to start new interview
-  const resetInterview = () => {
+
+  // Start a new interview
+  const startNewInterview = () => {
     setStep('setup');
-    setTopic('');
-    setCustomTopic('');
-    setExperience('Intermediate');
-    setQuestions([]);
-    setCurrentQuestionIndex(0);
-    setRecordedAnswers([]);
-    setFeedback(null);
-    setOverallFeedback(null);
-    stopMediaTracks();
   };
-  
+
   // Render setup screen
   const renderSetup = () => {
     return (
       <Box 
         bg={bgColor} 
-        p={6} 
-        borderRadius="lg" 
-        boxShadow="lg"
+        p={8} 
+        borderRadius="xl" 
+        boxShadow="xl"
         borderWidth="1px"
         borderColor={borderColor}
-        w="100%"
       >
         <VStack spacing={6} align="stretch">
-          <Heading size="md" textAlign="center">
-            Create Your Mock Interview
-          </Heading>
+          <Heading size="lg">Interview Setup</Heading>
           
           <FormControl isRequired>
             <FormLabel>Interview Topic</FormLabel>
             <Select 
-              value={topic} 
+              placeholder="Select a topic or type your own"
+              value={topic}
               onChange={(e) => setTopic(e.target.value)}
-              placeholder="Select a topic"
-              colorScheme="yellow"
+              size="lg"
+              bg={formBg}
+              borderColor={borderColor}
+              _hover={{ borderColor: accentColor }}
             >
-              {topics.map((t) => (
+              {topicSuggestions.map((t) => (
                 <option key={t} value={t}>{t}</option>
               ))}
             </Select>
-          </FormControl>
-          
-          {topic === 'Custom' && (
-            <FormControl isRequired>
-              <FormLabel>Custom Topic</FormLabel>
-              <Input 
-                value={customTopic}
-                onChange={(e) => setCustomTopic(e.target.value)}
-                placeholder="Enter your topic"
+            
+            {topic === 'Custom' && (
+              <Input
+                mt={4}
+                placeholder="Enter custom topic"
+                value={topic}
+                onChange={(e) => setTopic(e.target.value)}
+                size="lg"
+                borderColor={borderColor}
+                _hover={{ borderColor: accentColor }}
               />
-            </FormControl>
-          )}
+            )}
+          </FormControl>
           
           <FormControl>
             <FormLabel>Experience Level</FormLabel>
             <Select 
-              value={experience} 
+              value={experience}
               onChange={(e) => setExperience(e.target.value)}
-              colorScheme="yellow"
+              size="lg"
+              bg={formBg}
+              borderColor={borderColor}
+              _hover={{ borderColor: accentColor }}
             >
-              {experienceLevels.map((level) => (
-                <option key={level} value={level}>{level}</option>
+              {experienceOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
               ))}
             </Select>
           </FormControl>
           
-          <Button 
-            colorScheme="yellow" 
-            size="lg" 
-            onClick={handleStartInterview}
-            isDisabled={!topic || (topic === 'Custom' && !customTopic)}
+          <FormControl>
+            <FormLabel>Number of Questions</FormLabel>
+            <NumberInput 
+              defaultValue={5} 
+              min={3} 
+              max={10}
+              onChange={(valueString) => setNumQuestions(parseInt(valueString))}
+              value={numQuestions}
+              size="lg"
+            >
+              <NumberInputField 
+                bg={formBg}
+                borderColor={borderColor}
+                _hover={{ borderColor: accentColor }}
+              />
+              <NumberInputStepper>
+                <NumberIncrementStepper />
+                <NumberDecrementStepper />
+              </NumberInputStepper>
+            </NumberInput>
+          </FormControl>
+          
+          <FormControl display="flex" alignItems="center">
+            <FormLabel htmlFor="video-toggle" mb="0">
+              Enable webcam during interview
+            </FormLabel>
+            <Switch 
+              id="video-toggle" 
+              colorScheme="yellow"
+              isChecked={videoEnabled}
+              onChange={toggleVideo}
+            />
+          </FormControl>
+          
+          <Box 
+            p={4} 
+            bg={lightBg} 
+            borderRadius="md"
+            borderLeftWidth="4px"
+            borderLeftColor={accentColor}
+          >
+            <Text>
+              <strong>How it works:</strong> You'll be asked a series of questions about {topic || "your selected topic"}. 
+              Answer each question by speaking into your microphone. Your answers will be transcribed automatically.
+              After the interview, you'll receive detailed feedback on your performance.
+            </Text>
+          </Box>
+          
+          <Button
+            colorScheme="yellow"
+            size="lg"
+            onClick={startInterview}
+            rightIcon={<FaPlay />}
+            isLoading={loading}
+            loadingText="Creating Interview"
             mt={4}
           >
             Start Interview
@@ -454,410 +625,335 @@ const MockInterview = () => {
       </Box>
     );
   };
-  
+
   // Render recording screen
   const renderRecording = () => {
+    if (!interview) return null;
+    
     return (
-      <Box w="100%">
-        <Flex 
-          direction={{ base: 'column', md: 'row' }} 
-          gap={6}
-        >
-          {/* Question Section */}
-          <Box 
-            flex="1"
-            bg={bgColor} 
-            p={6} 
-            borderRadius="lg" 
-            boxShadow="lg"
-            borderWidth="1px"
-            borderColor={borderColor}
-          >
-            <VStack spacing={4} align="stretch">
-              <Flex justify="space-between" align="center">
-                <Badge colorScheme="yellow">
-                  Question {currentQuestionIndex + 1} of {questions.length}
-                </Badge>
-                <HStack>
-                  <Badge colorScheme="purple">{topic}</Badge>
-                  <Badge colorScheme="blue">{experience}</Badge>
-                </HStack>
-              </Flex>
+      <Box 
+        bg={bgColor} 
+        p={6} 
+        borderRadius="xl" 
+        boxShadow="xl"
+        borderWidth="1px"
+        borderColor={borderColor}
+      >
+        <VStack spacing={5} align="stretch">
+          <Flex justify="space-between" align="center" wrap="wrap">
+            <Heading size="md" color={accentColor}>
+              {interview.topic} Interview 
+              <Badge ml={2} colorScheme="yellow">{experience}</Badge>
+            </Heading>
+            
+            <HStack>
+              <Badge colorScheme="blue">
+                Question {currentQuestionIndex + 1} of {interview.questions.length}
+              </Badge>
               
-              <Heading size="md">
-                {questions[currentQuestionIndex]?.question}
-              </Heading>
+              <Badge colorScheme={isRecording ? "red" : "gray"}>
+                {isRecording ? "Recording" : "Not Recording"}
+              </Badge>
               
-              {isRecording && (
-                <>
-                  <Box mt={4}>
-                    <Flex justify="space-between" mb={1}>
-                      <Text fontSize="sm">Time Remaining:</Text>
-                      <Text fontSize="sm" fontWeight="bold">{Math.floor(timer / 60)}:{(timer % 60).toString().padStart(2, '0')}</Text>
-                    </Flex>
-                    <Progress 
-                      value={(timer / 120) * 100} 
-                      colorScheme={timer < 30 ? "red" : "yellow"} 
-                      size="sm" 
-                      borderRadius="full"
-                    />
-                  </Box>
-                </>
-              )}
-              
-              {recordedAnswers[currentQuestionIndex] && !isRecording && (
-                <Box mt={4}>
-                  <Text fontWeight="bold">Your Answer:</Text>
-                  <Box 
-                    mt={2} 
-                    p={4} 
-                    bg={useColorModeValue('gray.50', 'gray.700')} 
-                    borderRadius="md"
-                    borderWidth="1px"
-                    borderColor={borderColor}
-                    height="150px"
-                    overflowY="auto"
-                  >
-                    <Text>{recordedAnswers[currentQuestionIndex].text}</Text>
-                  </Box>
-                </Box>
-              )}
-            </VStack>
-          </Box>
+              <Badge>
+                Time: {formatTime(timer)}
+              </Badge>
+            </HStack>
+          </Flex>
           
-          {/* Video Section */}
-          <Box 
-            flex="1"
-            bg={bgColor} 
-            borderRadius="lg" 
-            boxShadow="lg"
-            borderWidth="1px"
-            borderColor={borderColor}
-            overflow="hidden"
-            display="flex"
-            flexDirection="column"
-          >
-            <Box position="relative" bg="black" flex="1" minH="300px">
-              <video 
+          <Progress 
+            value={(currentQuestionIndex / interview.questions.length) * 100} 
+            colorScheme="yellow" 
+            borderRadius="full" 
+            size="sm" 
+          />
+          
+          {/* Video display area (if video is enabled) */}
+          {videoEnabled && (
+            <Flex 
+              justify="center" 
+              borderRadius="md" 
+              overflow="hidden"
+              borderWidth="1px"
+              borderColor={borderColor}
+              boxShadow="sm"
+              bg="black"
+              position="relative"
+            >
+              <video
                 ref={videoRef}
-                autoPlay 
-                muted 
+                autoPlay
                 playsInline
+                muted
                 style={{ 
                   width: '100%',
-                  height: '100%',
-                  objectFit: 'cover',
+                  maxHeight: '300px',
+                  objectFit: 'contain'
                 }}
               />
               
+              <Button
+                position="absolute"
+                bottom="10px"
+                right="10px"
+                size="sm"
+                colorScheme={videoEnabled ? "red" : "green"}
+                leftIcon={videoEnabled ? <FaVideoSlash /> : <FaVideo />}
+                onClick={toggleVideo}
+                opacity="0.8"
+                _hover={{ opacity: 1 }}
+              >
+                {videoEnabled ? "Disable" : "Enable"} Video
+              </Button>
+            </Flex>
+          )}
+          
+          {/* Question */}
+          <Box 
+            borderWidth="1px" 
+            borderColor={borderColor} 
+            borderRadius="md" 
+            p={4}
+            bg={formBg}
+          >
+            <Text fontWeight="bold" mb={2}>Question:</Text>
+            <Text fontSize="lg">{interview.questions[currentQuestionIndex].question}</Text>
+          </Box>
+          
+          {/* Transcription/Answer */}
+          <Box>
+            <Flex justify="space-between" align="center" mb={2}>
+              <Text fontWeight="bold">
+                {isRecording ? "Transcription (Live)" : "Your Answer"}:
+              </Text>
               {isRecording && (
-                <Badge 
-                  position="absolute" 
-                  top="10px" 
-                  right="10px"
-                  colorScheme="red"
-                  display="flex"
-                  alignItems="center"
-                  px={2}
-                  py={1}
-                >
-                  <Box 
-                    w="8px" 
-                    h="8px" 
-                    borderRadius="full" 
-                    bg="red.500" 
-                    mr={2}
-                    animation="pulse 1.5s infinite" 
-                  />
-                  Recording
+                <Badge colorScheme="red" p={1} borderRadius="full" px={3}>
+                  <Flex align="center" gap={2}>
+                    <Box
+                      w="8px"
+                      h="8px"
+                      borderRadius="full"
+                      bg="red.500"
+                      animation="pulse 1.5s infinite"
+                      sx={{
+                        "@keyframes pulse": {
+                          "0%": { opacity: 1 },
+                          "50%": { opacity: 0.4 },
+                          "100%": { opacity: 1 }
+                        }
+                      }}
+                    />
+                    Recording
+                  </Flex>
                 </Badge>
               )}
-            </Box>
+            </Flex>
             
-            <Flex p={4} justify="center" bg={useColorModeValue('gray.100', 'gray.700')}>
+            {isRecording ? (
+              <Box 
+                borderWidth="1px" 
+                borderColor={borderColor} 
+                borderRadius="md" 
+                p={4}
+                minH="150px"
+                bg={formBg}
+                overflowY="auto"
+              >
+                {transcription || <Text color="gray.500">Speak now... (your answer will appear here)</Text>}
+              </Box>
+            ) : (
+              <Textarea
+                value={answers[currentQuestionIndex] || ''}
+                onChange={(e) => {
+                  const newAnswers = [...answers];
+                  newAnswers[currentQuestionIndex] = e.target.value;
+                  setAnswers(newAnswers);
+                }}
+                placeholder="Your answer will appear here. You can also type or edit it manually."
+                minH="120px"
+                resize="vertical"
+              />
+            )}
+          </Box>
+          
+          <HStack spacing={4} justify="space-between">
+            <Button
+              leftIcon={<FaArrowLeft />}
+              onClick={prevQuestion}
+              isDisabled={currentQuestionIndex === 0 || isRecording}
+              variant="outline"
+            >
+              Previous
+            </Button>
+            
+            <HStack>
               {!isRecording ? (
-                <Button 
-                  leftIcon={<FaPlay />} 
-                  colorScheme="red" 
+                <Button
+                  colorScheme="red"
+                  leftIcon={<FaMicrophone />}
                   onClick={startRecording}
                 >
                   Start Recording
                 </Button>
               ) : (
-                <Button 
-                  leftIcon={<FaStop />} 
-                  colorScheme="gray" 
+                <Button
+                  colorScheme="gray"
+                  leftIcon={<FaMicrophoneSlash />}
                   onClick={stopRecording}
                 >
                   Stop Recording
                 </Button>
               )}
-            </Flex>
-          </Box>
-        </Flex>
+            </HStack>
+            
+            <Button
+              rightIcon={<FaArrowRight />}
+              colorScheme="yellow"
+              onClick={nextQuestion}
+              isDisabled={isRecording}
+            >
+              {currentQuestionIndex < interview.questions.length - 1 ? 'Next' : 'Finish & Submit'}
+            </Button>
+          </HStack>
+        </VStack>
       </Box>
     );
   };
-  
+
   // Render feedback screen
   const renderFeedback = () => {
-    return (
-      <Box w="100%">
-        <Flex 
-          direction={{ base: 'column', md: 'row' }} 
-          gap={6}
-        >
-          {/* Question and Answer Section */}
-          <Box 
-            flex="1"
-            bg={bgColor} 
-            p={6} 
-            borderRadius="lg" 
-            boxShadow="lg"
-            borderWidth="1px"
-            borderColor={borderColor}
-          >
-            <VStack spacing={4} align="stretch">
-              <Flex justify="space-between" align="center">
-                <Badge colorScheme="yellow">
-                  Question {currentQuestionIndex + 1} of {questions.length}
-                </Badge>
-                <HStack>
-                  <Badge colorScheme="purple">{topic}</Badge>
-                  <Badge colorScheme="blue">{experience}</Badge>
-                </HStack>
-              </Flex>
-              
-              <Box>
-                <Text fontWeight="bold">Question:</Text>
-                <Text mt={1}>{questions[currentQuestionIndex]?.question}</Text>
-              </Box>
-              
-              <Box>
-                <Text fontWeight="bold">Your Answer:</Text>
-                <Box 
-                  mt={2} 
-                  p={4} 
-                  bg={useColorModeValue('gray.50', 'gray.700')} 
-                  borderRadius="md"
-                  height="150px"
-                  overflowY="auto"
-                  borderWidth="1px"
-                  borderColor={borderColor}
-                >
-                  <Text>{transcriptText}</Text>
-                </Box>
-              </Box>
-            </VStack>
-          </Box>
-          
-          {/* Feedback Section */}
-          <Box 
-            flex="1"
-            bg={bgColor} 
-            p={6} 
-            borderRadius="lg" 
-            boxShadow="lg"
-            borderWidth="1px"
-            borderColor={borderColor}
-          >
-            <VStack spacing={5} align="stretch">
-              <Heading size="md" textAlign="center">
-                AI Feedback
-              </Heading>
-              
-              <Flex justify="center">
-                <Badge 
-                  colorScheme={feedback?.score >= 8 ? "green" : feedback?.score >= 6 ? "yellow" : "red"}
-                  fontSize="xl" 
-                  py={1} 
-                  px={3} 
-                  borderRadius="md"
-                >
-                  Score: {feedback?.score}/10
-                </Badge>
-              </Flex>
-              
-              <Box>
-                <Text fontWeight="bold">Technical Accuracy:</Text>
-                <Text mt={1}>{feedback?.technicalAccuracy}</Text>
-              </Box>
-              
-              <Box>
-                <Text fontWeight="bold">Communication:</Text>
-                <Text mt={1}>{feedback?.communicationClarity}</Text>
-              </Box>
-              
-              <Divider />
-              
-              <Box>
-                <Text fontWeight="bold">Strengths:</Text>
-                <VStack align="start" mt={2} pl={4}>
-                  {feedback?.positives.map((positive, idx) => (
-                    <Text key={idx}>• {positive}</Text>
-                  ))}
-                </VStack>
-              </Box>
-              
-              <Box>
-                <Text fontWeight="bold">Areas for Improvement:</Text>
-                <VStack align="start" mt={2} pl={4}>
-                  {feedback?.improvements.map((improvement, idx) => (
-                    <Text key={idx}>• {improvement}</Text>
-                  ))}
-                </VStack>
-              </Box>
-              
-              <Divider />
-              
-              <Flex justify="center">
-                <Button 
-                  colorScheme="yellow" 
-                  rightIcon={<FaArrowRight />}
-                  onClick={handleNextQuestion}
-                >
-                  {currentQuestionIndex < questions.length - 1 ? 'Next Question' : 'Complete Interview'}
-                </Button>
-              </Flex>
-            </VStack>
-          </Box>
-        </Flex>
-      </Box>
-    );
-  };
-  
-  // Render complete interview screen
-  const renderComplete = () => {
+    if (!feedback) return null;
+    
     return (
       <Box 
         bg={bgColor} 
-        p={6} 
-        borderRadius="lg" 
-        boxShadow="lg"
+        p={8} 
+        borderRadius="xl" 
+        boxShadow="xl"
         borderWidth="1px"
         borderColor={borderColor}
         w="100%"
       >
-        <VStack spacing={6} align="stretch">
+        <VStack spacing={8} align="stretch">
           <Heading size="lg" textAlign="center" color={accentColor}>
-            Interview Complete!
+            Interview Feedback
           </Heading>
           
-          <Text textAlign="center">
-            You've completed your mock interview on {topic === 'Custom' ? customTopic : topic} at {experience} level.
-          </Text>
+          <Box 
+            p={6} 
+            bg={lightBg}
+            borderRadius="lg"
+            borderWidth="1px"
+            borderColor={borderColor}
+          >
+            <Heading size="md" mb={4}>
+              Overall Score: 
+              <Badge 
+                ml={2} 
+                fontSize="lg" 
+                colorScheme={
+                  feedback.overallScore >= 8 ? "green" : 
+                  feedback.overallScore >= 6 ? "yellow" : "red"
+                }
+                p={2}
+                borderRadius="md"
+              >
+                {feedback.overallScore}/10
+              </Badge>
+            </Heading>
+            
+            <Text fontWeight="medium" mb={2}>Summary:</Text>
+            <Text>{feedback.summary}</Text>
+          </Box>
           
-          {overallFeedback && (
+          <Heading size="md" mb={2}>
+            Question-by-Question Feedback
+          </Heading>
+          
+          {feedback.questionFeedback.map((qf, index) => (
             <Box 
-              p={6} 
-              bg={useColorModeValue('yellow.50', 'yellow.900')} 
-              borderRadius="md"
+              key={index}
+              p={4} 
               borderWidth="1px"
               borderColor={borderColor}
+              borderRadius="md"
+              mb={4}
             >
-              <VStack spacing={5} align="stretch">
-                <Flex justify="center">
-                  <Badge 
-                    colorScheme="yellow" 
-                    fontSize="2xl" 
-                    py={2} 
-                    px={4} 
-                    borderRadius="md"
-                  >
-                    Overall Score: {overallFeedback.overallScore}/10
-                  </Badge>
-                </Flex>
-                
-                <Box>
-                  <Heading size="sm" mb={2}>Key Strengths:</Heading>
-                  <VStack align="stretch" pl={4}>
-                    {overallFeedback.strengths.map((strength, index) => (
-                      <HStack key={index} align="start">
-                        <Text color="green.500">•</Text>
-                        <Text>{strength}</Text>
-                      </HStack>
-                    ))}
-                  </VStack>
-                </Box>
-                
-                <Box>
-                  <Heading size="sm" mb={2}>Areas for Improvement:</Heading>
-                  <VStack align="stretch" pl={4}>
-                    {overallFeedback.weaknesses.map((weakness, index) => (
-                      <HStack key={index} align="start">
-                        <Text color="red.500">•</Text>
-                        <Text>{weakness}</Text>
-                      </HStack>
-                    ))}
-                  </VStack>
-                </Box>
-                
-                <Divider />
-                
-                <Box>
-                  <Heading size="sm" mb={2}>Technical Evaluation:</Heading>
-                  <Text>{overallFeedback.technicalEvaluation}</Text>
-                </Box>
-                
-                <Box>
-                  <Heading size="sm" mb={2}>Communication Evaluation:</Heading>
-                  <Text>{overallFeedback.communicationEvaluation}</Text>
-                </Box>
-                
-                <Box>
-                  <Heading size="sm" mb={2}>Recommendations:</Heading>
-                  <VStack align="stretch" pl={4}>
-                    {overallFeedback.recommendations.map((recommendation, index) => (
-                      <HStack key={index} align="start">
-                        <Text color="blue.500">→</Text>
-                        <Text>{recommendation}</Text>
-                      </HStack>
-                    ))}
-                  </VStack>
-                </Box>
-              </VStack>
+              <Flex justify="space-between" align="center" mb={2}>
+                <Heading size="sm">Question {index + 1}</Heading>
+                <Badge 
+                  colorScheme={
+                    qf.score >= 8 ? "green" : 
+                    qf.score >= 6 ? "yellow" : "red"
+                  }
+                >
+                  Score: {qf.score}/10
+                </Badge>
+              </Flex>
+              
+              <Text fontWeight="medium" mb={1}>Question:</Text>
+              <Text mb={3}>{qf.question}</Text>
+              
+              <Text fontWeight="medium" mb={1}>Your Answer:</Text>
+              <Text 
+                mb={3} 
+                p={2} 
+                bg={lightBg}
+                borderRadius="md"
+              >
+                {qf.userAnswer || "No answer provided"}
+              </Text>
+              
+              <Text fontWeight="medium" mb={1}>Feedback:</Text>
+              <Text 
+                p={2} 
+                borderLeftWidth="4px"
+                borderLeftColor={accentColor}
+                bg={yellowBg}
+                mb={3}
+                borderRadius="md"
+              >
+                {qf.feedback}
+              </Text>
+              
+              <Divider my={3} />
+              
+              <Text fontWeight="medium" mb={1}>Ideal Answer:</Text>
+              <Text 
+                p={2} 
+                borderLeftWidth="4px"
+                borderLeftColor="green.400"
+                bg={greenBg}
+                borderRadius="md"
+              >
+                {qf.idealAnswer}
+              </Text>
             </Box>
-          )}
+          ))}
           
-          <Button 
-            colorScheme="yellow" 
-            size="lg" 
-            onClick={resetInterview}
+          <Button
+            colorScheme="yellow"
+            size="lg"
+            onClick={startNewInterview}
+            rightIcon={<FaArrowRight />}
+            mt={4}
           >
-            Start a New Interview
+            Start New Interview
           </Button>
         </VStack>
       </Box>
     );
   };
-  
-  // Main render
+
   return (
-    <Container maxW="6xl" py={8}>
-      {loading && (
-        <Flex 
-          position="fixed"
-          top="0"
-          left="0"
-          right="0"
-          bottom="0"
-          zIndex="overlay"
-          bg="rgba(0,0,0,0.7)"
-          justify="center"
-          align="center"
-          direction="column"
-        >
-          <Spinner size="xl" color="yellow.400" mb={4} />
-          <Text color="white" fontSize="lg">
-            {step === 'setup' ? 'Preparing your interview...' :
-             step === 'recording' ? 'Processing your answer...' :
-             'Analyzing your performance...'}
-          </Text>
-        </Flex>
-      )}
-      
+    <Container maxW="container.lg" py={12}>
       <VStack spacing={8} align="stretch">
-        <Heading textAlign="center" size="xl" color="yellow.500">
+        <Heading 
+          textAlign="center" 
+          size="xl"
+          bgGradient="linear(to-r, yellow.400, yellow.600)"
+          bgClip="text"
+        >
           AI Mock Interview
         </Heading>
         
@@ -868,10 +964,26 @@ const MockInterview = () => {
           </Alert>
         )}
         
-        {step === 'setup' && renderSetup()}
-        {step === 'recording' && renderRecording()}
-        {step === 'feedback' && renderFeedback()}
-        {step === 'complete' && renderComplete()}
+        {loading && (
+          <Flex justify="center" p={8}>
+            <VStack>
+              <Spinner color={accentColor} size="xl" />
+              <Text mt={4}>
+                {step === 'setup' ? 'Creating your interview...' : 
+                 step === 'feedback' ? 'Analyzing your answers...' : 
+                 'Loading...'}
+              </Text>
+            </VStack>
+          </Flex>
+        )}
+        
+        {!loading && (
+          <>
+            {step === 'setup' && renderSetup()}
+            {step === 'recording' && renderRecording()}
+            {step === 'feedback' && renderFeedback()}
+          </>
+        )}
       </VStack>
     </Container>
   );

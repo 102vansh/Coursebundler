@@ -2,7 +2,7 @@
  
  
  // server/controllers/interviewController.js
-const Interview = require('../models/Interview');
+const Interview = require('../models/interviewModel');
 const axios = require('axios');
 
 // Create a new mock interview

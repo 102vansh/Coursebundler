@@ -71,19 +71,48 @@ console.log(data.user)
         dispatch({type:"loadUserFail",payload:error.response.data.message})
     }
 }
-export const logoutuser = () => async(dispatch) => {
-    try{
-dispatch({type:"logoutRequest"})
-const {data} = await axios.get("http://localhost:3001/api/v1/user/logout",{withCredentials:true})
-localStorage.removeItem('token'); 
-dispatch({type:"logoutSuccess",payload:data.message})
-console.log(data.message)
-toast.success(data.message)
-    }catch(error){
-dispatch({type:"logoutFail",payload:error.response.data.message})
-toast.error(error.response.data.message)
+export const logoutuser = () => async (dispatch) => {
+    try {
+        dispatch({ type: 'logoutRequest' });
+
+        // Clear all auth data
+        localStorage.removeItem('token');
+        
+        // Remove any cookies that might be causing issues
+        document.cookie.split(";").forEach(cookie => {
+            const [name] = cookie.trim().split("=");
+            document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/;`;
+        });
+        
+        try {
+            await axios.get(`http://localhost:3001/api/v1/user/logout`, {
+                withCredentials: true,
+            });
+        } catch (error) {
+            console.log('Server logout failed, but continuing local logout:', error.message);
+        }
+
+        // Dispatch success action with clear message
+        dispatch({ type: 'logoutSuccess', payload: 'Logged out successfully' });
+        
+        // Force reload the page after a short delay to ensure Redux state is updated
+        setTimeout(() => {
+            window.location.reload();
+        }, 500);
+        
+    } catch (error) {
+        dispatch({
+            type: 'logoutFail',
+            payload: error.response?.data?.message || 'Logout failed, but session cleared locally',
+        });
+        
+        // Still remove token and reload
+        localStorage.removeItem('token');
+        setTimeout(() => {
+            window.location.reload();
+        }, 500);
     }
-} 
+};
 
 export const registeruser =(formdata) => async(dispatch) => {
     try{

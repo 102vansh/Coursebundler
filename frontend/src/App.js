@@ -32,10 +32,15 @@ import { getmyprofile } from './redux/actions/user'
 import {ProtectedRoute} from 'protected-route-react'
 import Loader from './component/layout/Loader'
 import QuizApp from './component/quiz/QuizApp'
+
 const App = () => {
   const dispatch = useDispatch()
   window.addEventListener('contextmenu', e => e.preventDefault())
   const {isAuthenticated,user,loading} = useSelector(state => state.user)
+  
+  // Debug authentication state
+  console.log('Auth state:', { isAuthenticated, user, loading });
+
   useEffect(()=>{
     dispatch(getmyprofile())
   },[dispatch])

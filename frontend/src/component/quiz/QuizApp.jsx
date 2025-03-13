@@ -359,7 +359,7 @@ const QuizApp = () => {
                 Popular Topics
               </Heading>
               <Flex flexWrap="wrap" gap={2}>
-                {['JavaScript', 'History', 'Science', 'Music', 'Movies', 'Sports'].map(suggestion => (
+                {['JavaScript', 'Golang', 'Docker', 'Kubernetes', 'Cloud', 'React'].map(suggestion => (
                   <Badge
                     key={suggestion}
                     px={3}
