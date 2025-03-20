@@ -33,7 +33,16 @@ import {
 import { FaPlay, FaStop, FaMicrophone, FaMicrophoneSlash, FaVideo, FaVideoSlash, FaArrowRight, FaArrowLeft } from 'react-icons/fa';
 
 // API base URL - change this to your backend server URL
-const API_BASE_URL = 'http://localhost:3001/api/v1';
+const API_BASE_URL = 'http://localhost:3001/api/v1/interview';
+
+// Create an axios instance with default config
+const api = axios.create({
+  baseURL: API_BASE_URL,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  withCredentials: true, // Important for cookies/auth
+});
 
 const MockInterview = () => {
   // State variables
@@ -161,7 +170,7 @@ const MockInterview = () => {
         }
       };
     } else {
-      setError('Speech recognition is not supported in this browser. Please try Chrome or Edge.');
+      console.warn('Speech recognition is not supported in this browser');
     }
     
     return () => {
@@ -347,18 +356,14 @@ const MockInterview = () => {
     
     try {
       // Make API call to create interview
-      const response = await axios.post(`${API_BASE_URL}/interview/create`, {
+      const response = await api.post('/create', {
         topic,
         experience,
         numQuestions
-      }, {
-        withCredentials: true,
-        headers: {
-          'Content-Type': 'application/json'
-        }
       });
       
       const interviewData = response.data;
+      console.log('Interview created:', interviewData);
       
       // Initialize answers array with empty strings
       const initialAnswers = Array(interviewData.questions.length).fill('');
@@ -370,8 +375,15 @@ const MockInterview = () => {
     } catch (error) {
       console.error('Error creating interview:', error);
       
-      // For demo/testing when backend is not available
-      if (error.message.includes('Network Error') || !API_BASE_URL.includes('localhost')) {
+      if (error.response) {
+        // The request was made and the server responded with a status code
+        // that falls out of the range of 2xx
+        setError(`Server error: ${error.response.data.message || 'Failed to create interview'}`);
+      } else if (error.request) {
+        // The request was made but no response was received
+        setError('No response from server. Please check your connection.');
+        
+        // For demo/testing when backend is not available
         console.log('Using mock data for interview');
         
         // Create mock interview for testing
@@ -408,7 +420,8 @@ const MockInterview = () => {
         setAnswers(initialAnswers);
         setStep('recording');
       } else {
-        setError('Failed to create interview. Please try again later.');
+        // Something happened in setting up the request that triggered an Error
+        setError(`Error: ${error.message}`);
       }
     } finally {
       setLoading(false);
@@ -452,20 +465,25 @@ const MockInterview = () => {
     
     try {
       // Submit answers to API
-      const response = await axios.post(`${API_BASE_URL}/interview/${interview._id}/submit`, {
+      const response = await api.post(`/${interview._id}/submit`, {
         answers
-      }, {
-        withCredentials: true
       });
       
-      setFeedback(response.data.feedback);
+      const feedbackData = response.data.feedback;
+      console.log('Feedback received:', feedbackData);
+      
+      setFeedback(feedbackData);
       setStep('feedback');
       
     } catch (error) {
       console.error('Error submitting interview:', error);
       
-      // For demo/testing when backend is not available
-      if (error.message.includes('Network Error') || !API_BASE_URL.includes('localhost')) {
+      if (error.response) {
+        setError(`Server error: ${error.response.data.message || 'Failed to submit answers'}`);
+      } else if (error.request) {
+        setError('No response from server. Please check your connection.');
+        
+        // For demo/testing when backend is not available
         console.log('Using mock data for feedback');
         
         // Create mock feedback for testing
@@ -486,13 +504,10 @@ const MockInterview = () => {
         setFeedback(mockFeedback);
         setStep('feedback');
       } else {
-        setError('Failed to submit interview. Please try again later.');
-        setLoading(false);
+        setError(`Error: ${error.message}`);
       }
     } finally {
-      if (!error) {
-        setLoading(false);
-      }
+      setLoading(false);
     }
   };
 
