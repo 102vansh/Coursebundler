@@ -27,7 +27,9 @@ const port = process.env.PORT || 3001;
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 app.use(cors({
-    origin:"http://localhost:3000",
+        
+        
+  origin: ["https://102vansh.github.io", "https://coursebundler-4.onrender.com"],
     credentials:true,
     methods:["GET","POST","PUT","DELETE"],
     allowedHeaders: ["Content-Type", "Authorization"]
