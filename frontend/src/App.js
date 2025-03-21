@@ -25,6 +25,7 @@ import AdminCourses from './component/admin/AdminCourses'
 import Users from './component/admin/Users'
 import {Toaster} from 'react-hot-toast'
 import CodeEditor from './component/codeedior/CodeEditor'
+import Terminal from './component/terminal/Terminal'
 import MockInterview from './component/interview/MockInterview'
 import { useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
@@ -71,6 +72,7 @@ const App = () => {
         <Route path='/payfail' element={<Paymentfail/>}/>
         <Route path='/quiz' element={<QuizApp/>}/>
         <Route path='/codeeditor' element={<CodeEditor/>}/>
+        <Route path='/terminal' element={<ProtectedRoute isAuthenticated = {isAuthenticated}><Terminal/></ProtectedRoute>}/>
         <Route path='/mockint' element={<MockInterview/>}/>
         <Route path='/admin/dashboard' element={<ProtectedRoute isAuthenticated = {isAuthenticated} adminRoute = {true} isAdmin={user && user.role === 'admin'}><Dashboard/></ProtectedRoute>}/>
         <Route path='/admin/createcourses' element={<ProtectedRoute isAuthenticated = {isAuthenticated} adminRoute = {true} isAdmin={user && user.role === 'admin'}><Createcourse/></ProtectedRoute>}/>

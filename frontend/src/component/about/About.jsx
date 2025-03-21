@@ -181,6 +181,7 @@ const About = () => {
                 zIndex={0}
               />
               <Image
+              
                 src="/download.jpeg"
                 borderRadius="xl"
                 objectFit="cover"

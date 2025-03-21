@@ -2,10 +2,13 @@ import axios from 'axios';
 import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
 
+
+const API_URL = process.env.REACT_APP_API_URL;
+
 export const updateprofile =(name,email) =>async(dispatch)=>{
 try{
 dispatch({type:'updateprofileRequest'})
-const {data} = await axios.put(`http://localhost:3001/api/v1/user/updateprofile`,{name,email},{
+const {data} = await axios.put(`${API_URL}/user/updateprofile`,{name,email},{
 headers:{
     "Content-Type": "application/json"
 },
@@ -25,7 +28,7 @@ toast.error(error.response.data.message)
 export const changepassword = (oldPassword,newPassword) =>async(dispatch)=>{
     try{
         dispatch({type:'changePasswordRequest'})
-        const {data} = await axios.put(`http://localhost:3000/api/v1/user/changepassword`,{oldPassword,newPassword},{
+        const {data} = await axios.put(`${API_URL}/user/changepassword`,{oldPassword,newPassword},{
             headers:{
                 "Content-Type": "application/json"
             },
@@ -46,7 +49,7 @@ export const changepassword = (oldPassword,newPassword) =>async(dispatch)=>{
 export const profilepicture = (formdata) =>async(dispatch)=>{
     try{
         dispatch({type:'updatepictureRequest'})
-        const {data} = await axios.put(`http://localhost:3000/api/v1/user/profilepicture`,formdata,{
+        const {data} = await axios.put(`${API_URL}/user/profilepicture`,formdata,{
             headers:{
                 "Content-Type": "multipart/form-data"
             },
@@ -65,7 +68,7 @@ export const profilepicture = (formdata) =>async(dispatch)=>{
 export const forgetpassword = (email) =>async(dispatch)=>{
     try{
         dispatch({type:'forgetpasswordRequest'})
-        const {data} = await axios.post(`http://localhost:3001/api/v1/user/forgotpassword`,{email},{
+        const {data} = await axios.post(`${API_URL}/user/forgotpassword`,{email},{
             headers:{
                 "Content-Type": "application/json"
             },
@@ -85,7 +88,7 @@ export const resetpassword = (token,password) =>async(dispatch)=>{
     const navigate = useNavigate()
     try{
         dispatch({type:'resetpasswordRequest'})
-        const {data} = await axios.put(`http://localhost:3001/api/v1/user/resetpassword/${token}`,{password},{
+        const {data} = await axios.put(`${API_URL}/user/resetpassword/${token}`,{password},{
             headers:{
                 "Content-Type": "application/json"
             },
@@ -106,7 +109,7 @@ export const resetpassword = (token,password) =>async(dispatch)=>{
 export const removefromPlaylist = (id) => async(dispatch) => {
     try{
         dispatch({type:"removeFromPlaylistRequest"})
-        const {data} = await axios.delete(`http://localhost:3001/api/v1/user/removeplaylist?id=${id}`,{
+        const {data} = await axios.delete(`${API_URL}/user/removeplaylist?id=${id}`,{
             headers:{
                 "Content-Type":"application/json"
             },

@@ -142,8 +142,9 @@ const Header = ({ isAuthenticated, user }) => {
               <LinkButton onClose={onClose} url='/contact' title='Contactus'></LinkButton>
               <LinkButton onClose={onClose} url='/about' title='About'></LinkButton>
               <LinkButton onClose={onClose} url='/quiz' title='AI Quiz' isNewFeature={true}></LinkButton>
-              <LinkButton onClose={onClose} url='/codeeditor' title='codeeditor' isNewFeature={true}></LinkButton>
-              <LinkButton onClose={onClose} url='/mockint' title='mockinterview' isNewFeature={true}></LinkButton>
+              <LinkButton onClose={onClose} url='/codeeditor' title='Code Editor' isNewFeature={true}></LinkButton>
+              <LinkButton onClose={onClose} url='/terminal' title='Linux Terminal' isNewFeature={true}></LinkButton>
+              <LinkButton onClose={onClose} url='/mockint' title='Mock Interview' isNewFeature={true}></LinkButton>
               <Text fontSize="xs" color="gray.500">Debug: {isAuthenticated ? 'Authenticated' : 'Not Authenticated'}</Text>
               <HStack justifyContent={'space-evenly'} position={'absolute'} bottom={'2rem'} width={'80%'}>
                 {isAuthenticated ? (
