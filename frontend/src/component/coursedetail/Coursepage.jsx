@@ -33,7 +33,7 @@ const CoursePage = ({user}) => {
               colorScheme="teal"
               width="100%"
             >
-              <Text noOfLines={1}>#{index + 1} {lecture?.title}</Text>
+              <Text noOfLines={1}>{index + 1}. {lecture?.title}</Text>
             </Button>
           ))}
         </VStack>
@@ -56,7 +56,7 @@ const CoursePage = ({user}) => {
               <Text>No video available</Text>
             </Box>
           )}
-          <Heading mt={4} size="md">#{lectureNumber + 1} {lectures[lectureNumber]?.title}</Heading>
+          <Heading mt={4} size="md"> {lectureNumber + 1} {lectures[lectureNumber]?.title}</Heading>
           <Text mt={2}>{lectures[lectureNumber]?.description}</Text>
         </Box>
       </Grid>
