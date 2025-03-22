@@ -69,7 +69,7 @@ exports.loginuser = async (req, res,next) => {
         const options = {
             expires: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000), // 15 days instead of hours
             httpOnly: true,
-            sameSite: 'Lax', // Helps with CSRF protection
+            sameSite: 'none', // Helps with CSRF protection
             secure: process.env.NODE_ENV === 'production', // Only use secure in production
             path: '/' // Ensure the cookie is available across your entire site
         };
